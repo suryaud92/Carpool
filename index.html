@@ -853,6 +853,15 @@
   // pendingLeave: { dateStr: { morning: bool, evening: bool } }
   let leaveCtx = { rider: null, monday: null, pendingLeave: {} };
 
+  function openLeaveModalForDay(rider, dateObj) {
+    const monday = getMonday(dateObj);
+    leaveCtx.rider = rider;
+    leaveCtx.monday = monday;
+    leaveCtx.pendingLeave = getRiderLeaveSessionMapForWeek(rider.key, monday, rider);
+    renderLeaveModal();
+    document.getElementById('leaveOverlay').classList.add('open');
+  }
+
   function openLeaveModal(rider) {
     leaveCtx.rider = rider;
     leaveCtx.monday = getMonday(realToday);
@@ -1322,13 +1331,41 @@
         }).join('')
       : `<div style="padding:12px 0;font-size:13px;color:var(--text2);text-align:center">No payment history yet</div>`;
 
-    // Leave status for current week
-    const leaveStatusHtml = currentLeaveDays >= 3
-      ? `<div style="background:var(--red-soft);border:1px solid var(--red-border);border-radius:9px;padding:9px 12px;font-size:12px;color:var(--red);font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
-          <span>🏖 ${currentLeaveDays}-day leave active this week</span>
-          <button id="editLeaveBtn" style="font-size:11px;padding:4px 9px;border-radius:7px;border:1px solid var(--red-border);background:var(--white);color:var(--red);cursor:pointer;font-family:inherit;font-weight:600">Edit</button>
-        </div>`
-      : '';
+    // Build rider leave day strip (like captain grid)
+    const riderDisplayDays = getWeekDays(monday);
+    const DAY_NAMES_STRIP = ['Mon','Tue','Wed','Thu','Fri'];
+    let riderGridHtml = '';
+    riderDisplayDays.forEach((d, i) => {
+      const ds = toDateStr(d);
+      const isFuture = d > realToday;
+      const lv = data[ds] && data[ds].leave && data[ds].leave[rider.key];
+      const mLeave = rider.sessions.includes('morning') && lv && lv.morning;
+      const eLeave = rider.sessions.includes('evening') && lv && lv.evening;
+      const captainMornOff = data[ds] && data[ds].morning && data[ds].morning.captain === false;
+      const captainEveOff  = data[ds] && data[ds].evening && data[ds].evening.captain === false;
+      const both = mLeave && eLeave;
+      const either = mLeave || eLeave;
+      const cls = isFuture ? 'is-future' : both ? 'absent' : either ? 'absent-partial' : 'present';
+      const bothSessions = rider.sessions.includes('morning') && rider.sessions.includes('evening');
+      const sub = both ? 'M+E leave' : mLeave ? 'Morn off' : eLeave ? 'Eve off' : (captainMornOff && captainEveOff) ? 'No trip' : 'Present';
+      riderGridHtml += `<button class="captain-day-btn ${cls}" data-date="${ds}" ${isFuture ? 'disabled' : ''}>
+        <span class="cd-name">${DAY_NAMES_STRIP[i]}</span><span class="cd-date">${d.getDate()}</span><span class="cd-sub">${sub}</span>
+      </button>`;
+    });
+    const leaveStatusHtml = `<div id="riderLeaveGrid" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700">🏖 This Week Leave</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:#2e7d32;display:inline-block"></span>Present</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:var(--orange);display:inline-block"></span>Partial</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:#9e9e9e;display:inline-block"></span>Full leave</span>
+        </div>
+      </div>
+      <div class="captain-days-grid">${riderGridHtml}</div>
+      <div style="margin-top:8px;padding:8px 10px;background:var(--blue-soft);border:1px solid var(--blue-border);border-radius:8px;font-size:11px;color:var(--blue)">
+        💡 Tap a day to mark or edit your leave sessions. Minimum 3 sessions required for dues adjustment.
+      </div>
+    </div>`;
 
     container.innerHTML=`<div class="dash-card">
       <div class="dash-user-row">
@@ -1352,11 +1389,6 @@
         <div class="dash-metric"><div class="dash-metric-label">Weeks pending</div><div class="dash-metric-value ${pendingCount>0?'warn':'ok'}">${pendingCount}</div></div>
       </div>
 
-      <!-- Apply Leave button -->
-      <button id="applyLeaveBtn" style="width:100%;padding:10px;border:1.5px solid var(--red-border);border-radius:var(--radius-sm);background:var(--red-soft);font-family:inherit;font-size:13px;font-weight:700;color:var(--red);cursor:pointer;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:7px">
-        🏖 Apply / Edit Leave
-      </button>
-
       <div class="dash-tab-row">
         <button class="dash-tab active" id="dashTabDue" onclick="switchDashTab('due')">Dues</button>
         <button class="dash-tab" id="dashTabHist" onclick="switchDashTab('hist')">History</button>
@@ -1365,8 +1397,13 @@
       <div id="dashHistPanel" style="display:none">${histHtml}</div>
     </div>`;
 
-    document.getElementById('applyLeaveBtn')?.addEventListener('click',()=>openLeaveModal(rider));
-    document.getElementById('editLeaveBtn')?.addEventListener('click',()=>openLeaveModal(rider));
+    // Wire up rider leave day strip
+    document.querySelectorAll('#riderLeaveGrid .captain-day-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const d = parseDate(btn.dataset.date);
+        openLeaveModalForDay(rider, d);
+      });
+    });
     document.getElementById('makePaymentBtn')?.addEventListener('click',()=>openPaymentSelector(rider,unsettled));
 
     container.querySelectorAll('.dash-mark-paid-btn').forEach(btn=>{
