@@ -1300,9 +1300,9 @@
         const leaveNotes=getCaptainLeaveNotes(details.monday);
         const leaveHtml=leaveNotes.length
           ?`<div class="captain-leave-note"><span class="captain-leave-note-icon">🚗</span><span><strong>Captain on leave:</strong> ${leaveNotes.join('; ')}</span></div>`:'';
-        const riderLeaveDays=getRiderLeaveDaysInWeek(rider.key,details.monday);
-        const riderLeaveHtml=riderLeaveDays>=3
-          ?`<div style="display:flex;align-items:center;gap:6px;padding:0 12px 8px;font-size:11px;color:var(--red)">🏖 Your ${riderLeaveDays}-day leave applied — dues adjusted</div>`:'';
+        const riderLeaveSessions=getRiderLeaveSessionsInWeek(rider.key,details.monday,rider);
+        const riderLeaveHtml=riderLeaveSessions>=3
+          ?`<div style="display:flex;align-items:center;gap:6px;padding:0 12px 8px;font-size:11px;color:var(--red)">🏖 Your ${riderLeaveSessions}-session leave applied — dues adjusted</div>`:'';
         dueBlocksHtml+=`<div class="dash-week-block unpaid">
           <div class="dash-week-block-hd">
             <div>
