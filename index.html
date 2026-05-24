@@ -31,10 +31,9 @@
     .sync-dot.pulse { animation: pulse 1.2s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    /* ── Header card ── */
     .header-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; position: relative; }
     .header-center { position: absolute; left: 50%; transform: translateX(-50%); pointer-events: none; text-align: center; }
-    .header-app-name { font-size: 13px; font-weight: 700; color: var(--text); text-align: center; line-height: 1.3; letter-spacing: -0.2px; }
+    .header-app-name { font-size: 17px; font-weight: 700; color: var(--text); text-align: center; line-height: 1.3; letter-spacing: -0.5px; }
     .header-right { display: flex; align-items: center; gap: 8px; }
     .header-admin-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--purple-soft); border: 1px solid var(--purple-border); color: var(--purple); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; }
     .header-admin-btn:hover { background: var(--purple-border); }
@@ -42,7 +41,6 @@
     .role-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 6px; border-radius: 20px; display: inline-block; }
     .role-badge.admin { background: var(--purple-soft); color: var(--purple); border: 1px solid var(--purple-border); }
     .role-badge.user  { background: var(--blue-soft);   color: var(--blue);   border: 1px solid var(--blue-border); }
-    /* User info row inside admin/settings sheet */
     .admin-user-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--white); border-radius: var(--radius-sm); margin: 12px 16px 0; border: 1px solid var(--border); }
     .admin-user-info { display: flex; flex-direction: column; gap: 3px; }
     .admin-user-name { font-size: 14px; font-weight: 700; color: var(--text); }
@@ -50,36 +48,7 @@
     .admin-signout-btn { font-size: 12px; font-weight: 600; padding: 7px 13px; border-radius: 8px; border: 1px solid var(--red-border); background: var(--red-soft); color: var(--red); cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: opacity 0.15s; flex-shrink: 0; }
     .admin-signout-btn:hover { opacity: 0.8; }
 
-    /* ── Payment sheet ── */
-    .pay-sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 350; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
-    .pay-sheet-overlay.open { opacity: 1; pointer-events: all; }
-    .pay-sheet { background: var(--white); border-radius: 22px 22px 0 0; width: 100%; max-width: 480px; padding: 0 0 36px; transform: translateY(40px); transition: transform 0.28s cubic-bezier(0.34,1.1,0.64,1); max-height: 88vh; overflow-y: auto; display: flex; flex-direction: column; }
-    .pay-sheet-overlay.open .pay-sheet { transform: translateY(0); }
-    .pay-sheet-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 12px auto 0; flex-shrink: 0; }
-    .pay-sheet-hd { padding: 14px 20px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .pay-sheet-title { font-size: 16px; font-weight: 700; }
-    .pay-sheet-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
-    .pay-week-list { padding: 10px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-    .pay-week-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 11px; cursor: pointer; transition: all 0.12s; user-select: none; }
-    .pay-week-item.selected { background: var(--blue-soft); border-color: var(--blue-border); }
-    .pay-week-check { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.12s; background: var(--white); }
-    .pay-week-item.selected .pay-week-check { background: var(--blue); border-color: var(--blue); }
-    .pay-week-check-icon { color: #fff; font-size: 12px; font-weight: 700; display: none; }
-    .pay-week-item.selected .pay-week-check-icon { display: block; }
-    .pay-week-info { flex: 1; min-width: 0; }
-    .pay-week-label { font-size: 13px; font-weight: 600; color: var(--text); }
-    .pay-week-note { font-size: 11px; color: var(--text3); margin-top: 1px; }
-    .pay-week-amt { font-size: 15px; font-weight: 700; color: var(--orange); flex-shrink: 0; }
-    .pay-week-item.selected .pay-week-amt { color: var(--blue); }
-    .pay-sheet-footer { padding: 12px 16px 0; border-top: 1px solid var(--border); flex-shrink: 0; }
-    .pay-total-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .pay-total-label { font-size: 13px; color: var(--text2); font-weight: 600; }
-    .pay-total-amt { font-size: 22px; font-weight: 700; color: var(--orange); letter-spacing: -0.3px; }
-    .pay-actions { display: flex; gap: 8px; }
-    .pay-actions .action-btn { flex: 1; text-align: center; padding: 13px 8px; font-size: 13px; border-radius: var(--radius-sm); }
-    .make-payment-btn { width: 100%; padding: 13px; border: none; border-radius: var(--radius-sm); background: var(--blue); font-family: inherit; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; transition: opacity 0.15s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .make-payment-btn:hover { opacity: 0.9; }
-    .make-payment-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
     .login-screen.hidden { display: none; }
     .login-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; gap: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
     .login-logo  { font-size: 40px; }
@@ -116,7 +85,6 @@
     .captain-day-btn .cd-sub { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: inherit; margin-top: 1px; }
     .captain-day-btn.is-future { opacity: 0.3; cursor: not-allowed; }
 
-    /* Captain leave note inside week */
     .captain-leave-note { display: flex; align-items: flex-start; gap: 7px; margin-top: 8px; padding: 8px 10px; background: var(--yellow-soft); border: 1px solid var(--yellow-border); border-radius: 8px; font-size: 11px; color: var(--yellow); line-height: 1.5; }
     .captain-leave-note-icon { flex-shrink: 0; font-size: 13px; margin-top: 1px; }
 
@@ -166,8 +134,7 @@
     .dash-metric-value.warn { color: var(--orange); }
     .dash-metric-value.ok   { color: var(--green); }
     .dash-section-title { font-size: 10px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
-    .dash-days-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 6px; }
-    .dash-day { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 7px 3px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--white); cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+    .dash-day { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 7px 3px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--white); }
     .dash-day .dd-name { font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text2); letter-spacing: 0.3px; }
     .dash-day .dd-num  { font-size: 14px; font-weight: 700; color: var(--text); }
     .dash-day .dd-sub  { font-size: 8px; font-weight: 700; text-transform: uppercase; color: inherit; }
@@ -178,9 +145,6 @@
     .dash-day.absent { background: #f5f5f5; border-color: #bdbdbd; }
     .dash-day.absent .dd-name, .dash-day.absent .dd-num { color: #9e9e9e; }
     .dash-day.future { opacity: 0.3; }
-    .dash-legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-    .dash-legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text2); }
-    .dash-legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .dash-tab-row { display: flex; gap: 4px; margin-bottom: 10px; }
     .dash-tab { flex: 1; padding: 7px; border: 1px solid var(--border2); border-radius: 7px; background: transparent; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; }
     .dash-tab.active { background: var(--text); color: #fff; border-color: var(--text); }
@@ -193,13 +157,76 @@
     .dash-week-amt   { font-size: 15px; font-weight: 700; }
     .dash-week-amt.orange { color: var(--orange); }
     .dash-week-amt.green  { color: var(--green); }
-    .dash-week-btns { display: flex; gap: 6px; padding: 0 12px 10px; }
-    .dash-week-btns .action-btn { flex: 1; text-align: center; font-size: 12px; padding: 8px 6px; }
     .dash-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
     .dash-badge.due  { background: var(--orange-soft); color: var(--orange); border: 1px solid var(--orange-border); }
     .dash-badge.paid { background: var(--green-soft);  color: var(--green);  border: 1px solid var(--green-border); }
-    .dash-total-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0 2px; border-top: 1px solid var(--border); margin-top: 4px; }
-    .no-dues { font-size: 13px; color: var(--text3); padding: 6px 0; }
+    .dash-total-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 4px; border-top: 1px solid var(--border); margin-top: 6px; }
+
+    .make-payment-btn { width: 100%; padding: 13px; border: none; border-radius: var(--radius-sm); background: var(--blue); font-family: inherit; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; transition: opacity 0.15s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .make-payment-btn:hover { opacity: 0.9; }
+
+    /* Payment selector */
+    .payment-selector-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 350; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .payment-selector-overlay.open { opacity: 1; pointer-events: all; }
+    .payment-selector-sheet { background: var(--white); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 8px 20px 36px; transform: translateY(30px); transition: transform 0.25s cubic-bezier(0.34,1.2,0.64,1); max-height: 88vh; overflow-y: auto; }
+    .payment-selector-overlay.open .payment-selector-sheet { transform: translateY(0); }
+    .ps-week-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 8px; cursor: pointer; user-select: none; transition: all 0.12s; }
+    .ps-week-row.selected { border-color: var(--blue); background: var(--blue-soft); }
+    .ps-week-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+    .ps-checkbox { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--border2); background: var(--white); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+    .ps-week-row.selected .ps-checkbox { background: var(--blue); border-color: var(--blue); }
+    .ps-checkbox-tick { color: #fff; font-size: 11px; font-weight: 700; display: none; }
+    .ps-week-row.selected .ps-checkbox-tick { display: block; }
+    .ps-week-label { font-size: 13px; font-weight: 600; color: var(--text); }
+    .ps-week-amt { font-size: 14px; font-weight: 700; color: var(--orange); flex-shrink: 0; }
+    .ps-total-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 6px; border-top: 1.5px solid var(--border); margin-top: 4px; }
+    .ps-total-label { font-size: 13px; font-weight: 600; color: var(--text2); }
+    .ps-total-amt { font-size: 20px; font-weight: 700; color: var(--blue); }
+    .ps-pay-btn { width: 100%; padding: 14px; border: none; border-radius: var(--radius-sm); background: var(--blue); font-family: inherit; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; transition: opacity 0.15s; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .ps-pay-btn:hover { opacity: 0.9; }
+    .ps-pay-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Leave modal */
+    .leave-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 350; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .leave-overlay.open { opacity: 1; pointer-events: all; }
+    .leave-sheet { background: var(--white); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 8px 20px 36px; transform: translateY(30px); transition: transform 0.25s cubic-bezier(0.34,1.2,0.64,1); max-height: 90vh; overflow-y: auto; }
+    .leave-overlay.open .leave-sheet { transform: translateY(0); }
+
+    .leave-week-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; margin-top: 18px; }
+    .leave-week-label { font-size: 13px; font-weight: 700; color: var(--text); }
+    .leave-week-nav { display: flex; align-items: center; gap: 6px; }
+    .leave-nav-btn { background: var(--bg); border: 1px solid var(--border2); border-radius: 7px; padding: 4px 10px; font-size: 13px; cursor: pointer; color: var(--text2); }
+    .leave-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .leave-days-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 14px; }
+    .leave-day-btn { display: flex; flex-direction: column; align-items: center; padding: 8px 4px; border-radius: 9px; border: 1.5px solid var(--border); background: var(--white); cursor: default; font-family: inherit; transition: all 0.12s; gap: 4px; }
+    .leave-day-btn .ld-name { font-size: 9px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.3px; }
+    .leave-day-btn .ld-date { font-size: 15px; font-weight: 700; color: var(--text); }
+    .leave-day-btn .ld-sub  { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1px; }
+    .leave-day-btn.on-leave { background: var(--red-soft); border-color: var(--red-border); }
+    .leave-day-btn.on-leave .ld-name, .leave-day-btn.on-leave .ld-date { color: var(--red); }
+    .leave-day-btn.on-leave .ld-sub { color: var(--red); }
+    .leave-day-btn.future { opacity: 0.3; pointer-events: none; }
+    .sess-btns { display: flex; gap: 3px; width: 100%; }
+    .sess-btn { flex: 1; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 3px 2px; border-radius: 5px; border: 1.5px solid var(--border); background: var(--white); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.12s; text-align: center; }
+    .sess-btn.active { background: var(--red-soft); border-color: var(--red-border); color: var(--red); }
+    .sess-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .sess-btn.captain-off { background: #f5f5f5; border-color: #bdbdbd; color: #9e9e9e; opacity: 0.5; cursor: not-allowed; }
+
+    .leave-rule-note { padding: 10px 12px; background: var(--blue-soft); border: 1px solid var(--blue-border); border-radius: 9px; font-size: 11px; color: var(--blue); line-height: 1.6; margin-bottom: 14px; }
+    .leave-count-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg); border-radius: 9px; margin-bottom: 14px; }
+    .leave-count-label { font-size: 12px; color: var(--text2); font-weight: 600; }
+    .leave-count-val { font-size: 16px; font-weight: 700; }
+    .leave-count-val.ok   { color: var(--green); }
+    .leave-count-val.warn { color: var(--orange); }
+    .leave-count-val.err  { color: var(--red); }
+
+    .leave-apply-btn { width: 100%; padding: 14px; border: none; border-radius: var(--radius-sm); background: var(--red); font-family: inherit; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; transition: opacity 0.15s; }
+    .leave-apply-btn:hover { opacity: 0.9; }
+    .leave-apply-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Leave chip on dashboard */
+    .leave-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: var(--red-soft); color: var(--red); border: 1px solid var(--red-border); }
 
     .captain-sess-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
     .captain-sess-modal.open { opacity: 1; pointer-events: all; }
@@ -255,10 +282,7 @@
     .admin-icon-btn.warning { background: var(--yellow-soft); border-color: var(--yellow-border); color: var(--yellow); }
     .admin-icon-btn.success { background: var(--green-soft);  border-color: var(--green-border);  color: var(--green); }
     .paused-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; padding: 2px 7px; border-radius: 20px; background: var(--yellow-soft); color: var(--yellow); border: 1px solid var(--yellow-border); margin-left: 6px; }
-
-    /* Read-only banner */
     .readonly-banner { margin: 12px 16px 0; padding: 9px 14px; background: var(--yellow-soft); border: 1px solid var(--yellow-border); border-radius: 10px; font-size: 12px; color: var(--yellow); font-weight: 600; display: flex; align-items: center; gap: 7px; }
-
     .pause-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 600; opacity: 0; pointer-events: none; transition: opacity 0.18s; padding: 20px; }
     .pause-overlay.open { opacity: 1; pointer-events: all; }
     .pause-sheet { background: var(--white); border-radius: var(--radius); width: 100%; max-width: 380px; padding: 22px 20px 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); transform: scale(0.96); transition: transform 0.18s cubic-bezier(0.34,1.3,0.64,1); }
@@ -273,11 +297,9 @@
     .pause-date-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); margin-bottom: 4px; }
     .pause-date-input { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border2); border-radius: 8px; font-family: inherit; font-size: 13px; background: var(--bg); color: var(--text); }
     .pause-date-input:focus { outline: none; border-color: var(--blue); background: var(--white); }
-
     .admin-save-bar { padding: 14px 16px 0; }
     .admin-save-btn { width: 100%; padding: 14px; border: none; border-radius: var(--radius-sm); background: var(--blue); font-family: inherit; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; transition: opacity 0.15s; }
     .admin-save-btn:hover { opacity: 0.9; }
-
     .rider-edit-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 500; opacity: 0; pointer-events: none; transition: opacity 0.18s; padding: 20px; }
     .rider-edit-overlay.open { opacity: 1; pointer-events: all; }
     .rider-edit-sheet { background: var(--white); border-radius: var(--radius); width: 100%; max-width: 400px; padding: 22px 20px 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); transform: scale(0.96); transition: transform 0.18s cubic-bezier(0.34,1.3,0.64,1); }
@@ -293,7 +315,6 @@
     .color-swatches { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 6px; }
     .color-swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2.5px solid transparent; transition: transform 0.1s; }
     .color-swatch.selected { border-color: var(--text); transform: scale(1.15); }
-
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--text); color: #fff; border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); z-index: 999; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
     .toast.show { transform: translateX(-50%) translateY(0); }
   </style>
@@ -342,7 +363,6 @@
     <span id="syncMsg">Connecting…</span>
   </div>
 
-  <!-- Header card -->
   <div class="header-card">
     <div style="width:36px;flex-shrink:0"></div>
     <div class="header-center">
@@ -392,21 +412,56 @@
   </div>
 </div>
 
-<!-- Rider day session modal -->
-<div class="captain-sess-modal" id="riderSessModal">
-  <div class="captain-sess-sheet">
+<!-- Leave Application Sheet -->
+<div class="leave-overlay" id="leaveOverlay">
+  <div class="leave-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="riderSessTitle">My Attendance — Day</div>
-    <div class="modal-sub">Toggle which sessions you attended</div>
-    <div id="riderSessions"></div>
-    <div class="modal-actions">
-      <button class="modal-cancel" id="riderSessCancel">Cancel</button>
-      <button class="modal-confirm" id="riderSessConfirm">Apply</button>
+    <div class="modal-title">🏖 Apply Leave</div>
+    <div class="modal-sub" id="leaveModalSub">Tap morning / evening per day to mark sessions absent. Dues adjust at 3+ sessions.</div>
+
+    <div class="leave-rule-note">
+      💡 <strong>Rule:</strong> You can save leave for any number of sessions. Dues are only adjusted when you mark <strong>3 or more sessions</strong> absent in a week.
     </div>
+
+    <div class="leave-week-hd">
+      <span class="leave-week-label" id="leaveWeekLabel">Week of …</span>
+      <div class="leave-week-nav">
+        <button class="leave-nav-btn" id="leaveWeekPrev">‹</button>
+        <button class="leave-nav-btn" id="leaveWeekNext">›</button>
+      </div>
+    </div>
+
+    <div class="leave-days-grid" id="leaveDaysGrid"></div>
+
+    <div class="leave-count-bar">
+      <span class="leave-count-label">Sessions selected this week</span>
+      <span class="leave-count-val" id="leaveCountVal">0 / 10</span>
+    </div>
+
+    <button class="leave-apply-btn" id="leaveApplyBtn" disabled>Apply Leave</button>
+    <button class="leave-apply-btn" id="leaveCancelLeaveBtn" style="display:none;background:var(--text2);margin-top:8px">✕ Cancel Leave for this Week</button>
+    <button class="modal-cancel" style="width:100%;margin-top:8px;text-align:center" id="leaveCancel">Close</button>
   </div>
 </div>
 
-<!-- Pause modal (admin-only, opened only after role check) -->
+<!-- Payment Selector Sheet -->
+<div class="payment-selector-overlay" id="paymentSelectorOverlay">
+  <div class="payment-selector-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-size:22px;text-align:center;margin-bottom:4px">💸</div>
+    <div class="modal-title" style="text-align:center;margin-bottom:4px">Make Payment</div>
+    <div class="modal-sub" style="text-align:center;margin-bottom:16px" id="psSub">Select weeks to pay</div>
+    <div id="psWeekList"></div>
+    <div class="ps-total-row">
+      <span class="ps-total-label">Selected total</span>
+      <span class="ps-total-amt" id="psTotalAmt">₹0</span>
+    </div>
+    <button class="ps-pay-btn" id="psPayBtn" disabled>⚡ Pay Now via GPay</button>
+    <button class="modal-cancel" style="width:100%;margin-top:8px;text-align:center" id="psCancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Pause modal -->
 <div class="pause-overlay" id="pauseOverlay">
   <div class="pause-sheet">
     <div class="pause-title" id="pauseTitle">Pause Rider</div>
@@ -434,14 +489,12 @@
     <div style="background:var(--bg);position:sticky;top:0;z-index:2;">
       <div class="admin-handle"></div>
       <div class="admin-header">
-        <div class="admin-title" id="adminConsoleTitle">⚙ Admin Console</div>
+        <div class="admin-title">⚙ Admin Console</div>
         <button class="admin-close" id="adminClose">✕</button>
       </div>
     </div>
-    <!-- Read-only banner injected here for non-admins -->
     <div id="adminReadOnlyBannerSlot"></div>
-    <!-- Logged-in user info -->
-    <div class="admin-user-row" id="adminUserRow">
+    <div class="admin-user-row">
       <div class="admin-user-info">
         <div style="display:flex;align-items:center;gap:6px">
           <span class="admin-user-name" id="adminUserName">—</span>
@@ -454,7 +507,7 @@
         Sign out
       </button>
     </div>
-    <div class="admin-body" id="adminBodyInner">
+    <div class="admin-body">
       <div class="admin-section">
         <div class="admin-section-hd"><span class="admin-section-title">💰 Trip Cost per Session</span></div>
         <div class="admin-cost-row">
@@ -492,7 +545,7 @@
       <label class="form-label">Name</label>
       <input class="form-input" id="re-name" type="text" placeholder="e.g. Ananya">
     </div>
-    <div class="form-row" id="re-email-row">
+    <div class="form-row">
       <label class="form-label">Google Email</label>
       <input class="form-input" id="re-email" type="email" placeholder="e.g. ananya@gmail.com">
       <div style="margin-top:5px;font-size:11px;color:var(--text3)">Leave blank — the user will request access and you approve it, or enter their email directly here.</div>
@@ -533,29 +586,6 @@
   </div>
 </div>
 
-<!-- Payment sheet (user) -->
-<div class="pay-sheet-overlay" id="paySheetOverlay">
-  <div class="pay-sheet">
-    <div class="pay-sheet-handle"></div>
-    <div class="pay-sheet-hd">
-      <div class="pay-sheet-title">💳 Make Payment</div>
-      <div class="pay-sheet-sub">Select the weeks you'd like to pay now</div>
-    </div>
-    <div class="pay-week-list" id="payWeekList"></div>
-    <div class="pay-sheet-footer">
-      <div class="pay-total-row">
-        <span class="pay-total-label">Selected total</span>
-        <span class="pay-total-amt" id="paySelectedTotal">₹0</span>
-      </div>
-      <div class="pay-actions">
-        <button class="action-btn btn-pay pay-actions" id="payMarkPaidBtn" style="flex:1;padding:13px 8px;font-size:13px;border-radius:var(--radius-sm)">✓ Mark as Paid</button>
-        <button class="action-btn btn-paynow" id="payGpayBtn" style="flex:1;padding:13px 8px;font-size:13px;border-radius:var(--radius-sm)">⚡ Pay via GPay</button>
-      </div>
-      <button class="modal-cancel" id="paySheetCancel" style="width:100%;margin-top:8px;padding:12px;border-radius:var(--radius-sm)">Cancel</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -585,40 +615,21 @@
   let _authResolved=false;
   setTimeout(()=>{if(_authResolved)return;hideAllAuthScreens();document.getElementById('loginScreen').classList.remove('hidden');const e=document.getElementById('loginError');e.textContent='Connection too slow — refresh.';e.style.display='block';},10000);
 
-  // ── Greeting ──────────────────────────────────────────
-  function getGreeting(){
-    const h=new Date().getHours();
-    if(h<12)return'Good Morning';
-    if(h<17)return'Good Afternoon';
-    return'Good Evening';
-  }
-
   function updateHeader(user){
-    const firstName=(user.displayName||user.email||'You').split(' ')[0];
-    // Populate user info inside settings sheet
-    document.getElementById('adminUserName').textContent=user.displayName||firstName;
+    document.getElementById('adminUserName').textContent=user.displayName||user.email||'You';
     document.getElementById('adminUserEmail').textContent=user.email||'';
     document.getElementById('adminSignOutBtn').onclick=()=>signOut(auth);
   }
 
-  // ── Role UI ───────────────────────────────────────────
   function applyRoleUI(){
     const isAdmin=currentRole==='admin';
-
-    // Cost inputs — read-only for non-admins
     document.querySelectorAll('.admin-cost-input').forEach(el=>el.disabled=!isAdmin);
-
-    // Tabs — Dues and History only for admins; hide whole tab bar for users
     document.getElementById('tabDuesBtn').style.display=isAdmin?'':'none';
     document.getElementById('tabHistoryBtn').style.display=isAdmin?'':'none';
     document.querySelector('.tab-bar').style.display=isAdmin?'':'none';
-
-    // Admin console controls — hidden for non-admins
     document.getElementById('addRiderBtn').style.display=isAdmin?'':'none';
     document.getElementById('adminSaveBar').style.display=isAdmin?'':'none';
     document.getElementById('rolesSection').style.display=isAdmin?'':'none';
-
-    // Role badge inside settings sheet
     const badge=document.getElementById('headerRoleBadge');
     badge.className=`role-badge ${currentRole}`;
     badge.textContent=isAdmin?'Admin':'User';
@@ -704,7 +715,7 @@
   function getMonday(date){const d=new Date(date),day=d.getDay();d.setDate(d.getDate()+(day===0?-6:1-day));d.setHours(0,0,0,0);return d;}
   function getWeekDays(monday){return Array.from({length:5},(_,i)=>{const d=new Date(monday);d.setDate(d.getDate()+i);return d;});}
   function getWeekRange(date){const monday=getMonday(date),friday=new Date(monday);friday.setDate(friday.getDate()+4);return{key:`${toDateStr(monday)}_${toDateStr(friday)}`,label:`${fmtDateShort(monday)} – ${fmtDateShort(friday)}`,monday,friday};}
-  function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),2200);}
+  function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),2800);}
 
   function initDate(dateStr){
     if(!data[dateStr])data[dateStr]={morning:{},evening:{}};
@@ -713,118 +724,319 @@
     getEveningRiders().forEach(k=>{if(d.evening[k]===undefined)d.evening[k]=true;});
   }
 
-  function calculateDayDue(entry,date){
-    const dues={};cfg.riders.forEach(r=>{dues[r.key]=0;});dues.captain=0;
-    const activeKeys=new Set(cfg.riders.filter(r=>{
-      const sd=r.startDate?parseDate(r.startDate):new Date(2000,0,1);
-      if(date<sd)return false;
-      if(r.pausedFrom&&r.pausedUntil){
-        const pFrom=parseDate(r.pausedFrom),pUntil=parseDate(r.pausedUntil);
-        if(date>=pFrom&&date<=pUntil)return false;
+  function calculateDayDue(entry, date) {
+    const dues = {}; cfg.riders.forEach(r => { dues[r.key] = 0; }); dues.captain = 0;
+    const activeKeys = new Set(cfg.riders.filter(r => {
+      const sd = r.startDate ? parseDate(r.startDate) : new Date(2000, 0, 1);
+      if (date < sd) return false;
+      if (r.pausedFrom && r.pausedUntil) {
+        const pFrom = parseDate(r.pausedFrom), pUntil = parseDate(r.pausedUntil);
+        if (date >= pFrom && date <= pUntil) return false;
       }
       return true;
-    }).map(r=>r.key));
-    const mr=getMorningRiders().filter(k=>k==='captain'||activeKeys.has(k));
-    const er=getEveningRiders().filter(k=>k==='captain'||activeKeys.has(k));
-    if(entry.morning&&entry.morning.captain!==false&&mr.length){const s=cfg.morningCost/mr.length;mr.forEach(p=>{dues[p]=(dues[p]||0)+s;});}
-    if(entry.evening&&entry.evening.captain!==false&&er.length){const s=cfg.eveningCost/er.length;er.forEach(p=>{dues[p]=(dues[p]||0)+s;});}
+    }).map(r => r.key));
+
+    // A rider is present in a session only if: active, captain drove, and not on leave for that session
+    const mr = getMorningRiders().filter(k => {
+      if (k === 'captain') return true;
+      if (!activeKeys.has(k)) return false;
+      // Check per-day morning attendance flag (false = absent/leave)
+      return entry.morning && entry.morning[k] !== false;
+    });
+    const er = getEveningRiders().filter(k => {
+      if (k === 'captain') return true;
+      if (!activeKeys.has(k)) return false;
+      return entry.evening && entry.evening[k] !== false;
+    });
+
+    if (entry.morning && entry.morning.captain !== false && mr.length > 1) {
+      // All travellers including captain split equally; captain earns total minus their own share
+      const totalTravellers = mr.length; // includes captain
+      const s = cfg.morningCost / totalTravellers;
+      const payers = mr.filter(k => k !== 'captain');
+      payers.forEach(p => { dues[p] = (dues[p] || 0) + s; });
+      dues.captain = (dues.captain || 0) + cfg.morningCost - s; // earns total minus their own share
+    } else if (entry.morning && entry.morning.captain !== false && mr.length === 1) {
+      // Only captain — no payers
+    }
+    if (entry.evening && entry.evening.captain !== false && er.length > 1) {
+      const totalTravellers = er.length; // includes captain
+      const s = cfg.eveningCost / totalTravellers;
+      const payers = er.filter(k => k !== 'captain');
+      payers.forEach(p => { dues[p] = (dues[p] || 0) + s; });
+      dues.captain = (dues.captain || 0) + cfg.eveningCost - s; // earns total minus their own share
+    }
     return dues;
   }
 
-  function canActOnRider(rider){if(currentRole==='admin')return true;if(!currentUser||!rider.email)return false;return currentUser.email.toLowerCase()===rider.email.toLowerCase();}
   function getMyRider(){if(currentRole==='admin'||!currentUser)return null;return cfg.riders.find(r=>r.email&&r.email.toLowerCase()===currentUser.email.toLowerCase())||null;}
-
   function istNow(){const n=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));n.setHours(0,0,0,0);return n;}
   function weekIsOver(monday){const fri=new Date(monday);fri.setDate(fri.getDate()+4);fri.setHours(0,0,0,0);return istNow()>fri;}
 
-  // ── Payment Sheet ─────────────────────────────────────
-  let paySheetCtx = { rider: null, weeks: [], selected: new Set() };
+  // ── Leave helpers ─────────────────────────────────────
+  // Stored in data[dateStr].leave[riderKey] = { morning: true/false, evening: true/false }
+  // The rule: only save if week has ≥3 absent sessions. Otherwise do nothing.
 
-  function openPaySheet(rider, unsettledWeeks) {
-    paySheetCtx.rider = rider;
-    paySheetCtx.weeks = unsettledWeeks;
-    paySheetCtx.selected = new Set(unsettledWeeks.map(w => w.wk));
-    renderPayWeekList();
-    document.getElementById('paySheetOverlay').classList.add('open');
-  }
-
-  function closePaySheet() {
-    document.getElementById('paySheetOverlay').classList.remove('open');
-  }
-
-  function renderPayWeekList() {
-    const list = document.getElementById('payWeekList');
-    list.innerHTML = '';
-    let total = 0;
-    paySheetCtx.weeks.forEach(({ wk, details }) => {
-      const selected = paySheetCtx.selected.has(wk);
-      if (selected) total += details.amount;
-      const item = document.createElement('div');
-      item.className = `pay-week-item${selected ? ' selected' : ''}`;
-      item.innerHTML = `
-        <div class="pay-week-check"><span class="pay-week-check-icon">✓</span></div>
-        <div class="pay-week-info">
-          <div class="pay-week-label">${details.label}</div>
-        </div>
-        <div class="pay-week-amt">₹${Math.round(details.amount)}</div>`;
-      item.addEventListener('click', () => {
-        if (paySheetCtx.selected.has(wk)) paySheetCtx.selected.delete(wk);
-        else paySheetCtx.selected.add(wk);
-        renderPayWeekList();
-      });
-      list.appendChild(item);
+  function getRiderLeaveDaysInWeek(riderKey, monday) {
+    let count = 0;
+    getWeekDays(monday).forEach(d => {
+      const ds = toDateStr(d);
+      if (data[ds] && data[ds].leave && data[ds].leave[riderKey]) count++;
     });
-    document.getElementById('paySelectedTotal').textContent = `₹${Math.round(total)}`;
-    const hasSelection = paySheetCtx.selected.size > 0;
-    document.getElementById('payMarkPaidBtn').disabled = !hasSelection;
-    document.getElementById('payGpayBtn').disabled = !hasSelection;
+    return count;
   }
 
-  function getSelectedPayTotal() {
-    return paySheetCtx.weeks
-      .filter(w => paySheetCtx.selected.has(w.wk))
-      .reduce((s, w) => s + w.details.amount, 0);
-  }
-
-  document.getElementById('paySheetCancel').addEventListener('click', closePaySheet);
-  document.getElementById('paySheetOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closePaySheet(); });
-
-  document.getElementById('payMarkPaidBtn').addEventListener('click', () => {
-    if (!paySheetCtx.selected.size) return;
-    paySheetCtx.selected.forEach(wk => {
-      settlements[`${paySheetCtx.rider.name}_${wk}`] = true;
+  // Count total leave sessions (morning + evening) for a rider in a week
+  function getRiderLeaveSessionsInWeek(riderKey, monday, rider) {
+    let count = 0;
+    getWeekDays(monday).forEach(d => {
+      const ds = toDateStr(d);
+      const lv = data[ds] && data[ds].leave && data[ds].leave[riderKey];
+      if (!lv) return;
+      if (rider.sessions.includes('morning') && lv.morning) count++;
+      if (rider.sessions.includes('evening') && lv.evening) count++;
     });
-    saveSettlements();
-    closePaySheet();
-    renderPersonalDashboard();
-    showToast(`✓ ${paySheetCtx.selected.size} week${paySheetCtx.selected.size > 1 ? 's' : ''} marked as paid`);
+    return count;
+  }
+
+  // Returns Set of dateStr strings where rider has any leave session this week
+  function getRiderLeaveSetForWeek(riderKey, monday) {
+    const s = new Set();
+    getWeekDays(monday).forEach(d => {
+      const ds = toDateStr(d);
+      const lv = data[ds] && data[ds].leave && data[ds].leave[riderKey];
+      if (lv && (lv.morning || lv.evening)) s.add(ds);
+    });
+    return s;
+  }
+
+  // Returns map of dateStr -> { morning, evening } for pending leave
+  function getRiderLeaveSessionMapForWeek(riderKey, monday, rider) {
+    const map = {};
+    getWeekDays(monday).forEach(d => {
+      const ds = toDateStr(d);
+      const lv = data[ds] && data[ds].leave && data[ds].leave[riderKey];
+      map[ds] = {
+        morning: rider.sessions.includes('morning') ? !!(lv && lv.morning) : false,
+        evening: rider.sessions.includes('evening') ? !!(lv && lv.evening) : false,
+      };
+    });
+    return map;
+  }
+
+  // Apply / remove leave for a rider on specific dates — only their enrolled sessions
+  function applyLeaveToData(riderKey, leaveMap, rider) {
+    // leaveMap: { dateStr: { morning: bool, evening: bool } }
+    Object.entries(leaveMap).forEach(([ds, sessions]) => {
+      if (!data[ds]) data[ds] = {morning:{}, evening:{}};
+      if (!data[ds].morning) data[ds].morning = {};
+      if (!data[ds].evening) data[ds].evening = {};
+      if (!data[ds].leave) data[ds].leave = {};
+      data[ds].leave[riderKey] = { morning: !!sessions.morning, evening: !!sessions.evening };
+      // Mark sessions absent/present based on leave
+      if (rider.sessions.includes('morning')) data[ds].morning[riderKey] = !sessions.morning;
+      if (rider.sessions.includes('evening')) data[ds].evening[riderKey] = !sessions.evening;
+    });
+  }
+
+  function clearLeaveFromData(riderKey, leaveDates, rider) {
+    leaveDates.forEach(ds => {
+      if (!data[ds]) return;
+      if (data[ds].leave) delete data[ds].leave[riderKey];
+      // Restore presence for their enrolled sessions
+      if (rider.sessions.includes('morning') && data[ds].morning) data[ds].morning[riderKey] = true;
+      if (rider.sessions.includes('evening') && data[ds].evening) data[ds].evening[riderKey] = true;
+    });
+  }
+
+  // ── Leave modal state ─────────────────────────────────
+  // pendingLeave: { dateStr: { morning: bool, evening: bool } }
+  let leaveCtx = { rider: null, monday: null, pendingLeave: {} };
+
+  function openLeaveModalForDay(rider, dateObj) {
+    const monday = getMonday(dateObj);
+    leaveCtx.rider = rider;
+    leaveCtx.monday = monday;
+    leaveCtx.pendingLeave = getRiderLeaveSessionMapForWeek(rider.key, monday, rider);
+    renderLeaveModal();
+    document.getElementById('leaveOverlay').classList.add('open');
+  }
+
+  function openLeaveModal(rider) {
+    leaveCtx.rider = rider;
+    leaveCtx.monday = getMonday(realToday);
+    leaveCtx.pendingLeave = getRiderLeaveSessionMapForWeek(rider.key, leaveCtx.monday, rider);
+    renderLeaveModal();
+    document.getElementById('leaveOverlay').classList.add('open');
+  }
+
+  // Max week users can navigate to (4 weeks ahead)
+  function getMaxLeaveMonday() {
+    const m = getMonday(realToday);
+    m.setDate(m.getDate() + 4 * 7);
+    return m;
+  }
+
+  function closeLeaveModal() {
+    document.getElementById('leaveOverlay').classList.remove('open');
+  }
+
+  function renderLeaveModal() {
+    const { rider, monday, pendingLeave } = leaveCtx;
+    const days = getWeekDays(monday);
+    const currentWeekMonday = getMonday(realToday);
+    const maxMonday = getMaxLeaveMonday();
+    const isCurrentWeek = toDateStr(monday) === toDateStr(currentWeekMonday);
+    const isFutureWeek = monday > currentWeekMonday;
+    const weekLabel = isCurrentWeek
+      ? `This Week (${fmtDateShort(days[0])} – ${fmtDateShort(days[4])})`
+      : `${fmtDateShort(days[0])} – ${fmtDateShort(days[4])}`;
+    document.getElementById('leaveWeekLabel').textContent = weekLabel;
+
+    const prevMonday = new Date(monday); prevMonday.setDate(prevMonday.getDate() - 7);
+    const nextMonday = new Date(monday); nextMonday.setDate(nextMonday.getDate() + 7);
+    const riderStart = rider.startDate ? parseDate(rider.startDate) : new Date(2000, 0, 1);
+    const riderStartMonday = getMonday(riderStart);
+    document.getElementById('leaveWeekPrev').disabled = monday <= riderStartMonday;
+    document.getElementById('leaveWeekNext').disabled = nextMonday > maxMonday;
+
+    const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri'];
+    const grid = document.getElementById('leaveDaysGrid');
+    grid.innerHTML = '';
+    days.forEach((d, i) => {
+      const ds = toDateStr(d);
+      const isFutureDay = !isFutureWeek && d > realToday;
+      const sess = pendingLeave[ds] || { morning: false, evening: false };
+      const anyLeave = sess.morning || sess.evening;
+
+      const card = document.createElement('div');
+      card.className = `leave-day-btn${anyLeave ? ' on-leave' : ''}${isFutureDay ? ' future' : ''}`;
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'ld-name'; nameEl.textContent = DAY_NAMES[i];
+      const dateEl = document.createElement('span');
+      dateEl.className = 'ld-date'; dateEl.textContent = d.getDate();
+
+      const sessRow = document.createElement('div');
+      sessRow.className = 'sess-btns';
+
+      // Check if captain is absent for each session on this day — block leave if so
+      const captainMorningAbsent = data[ds] && data[ds].morning && data[ds].morning.captain === false;
+      const captainEveningAbsent = data[ds] && data[ds].evening && data[ds].evening.captain === false;
+
+      if (rider.sessions.includes('morning')) {
+        const mb = document.createElement('button');
+        const capOff = captainMorningAbsent;
+        mb.className = `sess-btn${sess.morning ? ' active' : ''}${capOff ? ' captain-off' : ''}`;
+        mb.textContent = '\u{1F305}';
+        mb.disabled = isFutureDay || capOff;
+        mb.title = capOff ? 'No trip — captain absent' : 'Morning';
+        if (!capOff) {
+          mb.addEventListener('click', () => {
+            pendingLeave[ds] = { ...pendingLeave[ds], morning: !pendingLeave[ds].morning };
+            renderLeaveModal();
+          });
+        }
+        sessRow.appendChild(mb);
+      }
+      if (rider.sessions.includes('evening')) {
+        const eb = document.createElement('button');
+        const capOff = captainEveningAbsent;
+        eb.className = `sess-btn${sess.evening ? ' active' : ''}${capOff ? ' captain-off' : ''}`;
+        eb.textContent = '\u{1F306}';
+        eb.disabled = isFutureDay || capOff;
+        eb.title = capOff ? 'No trip — captain absent' : 'Evening';
+        if (!capOff) {
+          eb.addEventListener('click', () => {
+            pendingLeave[ds] = { ...pendingLeave[ds], evening: !pendingLeave[ds].evening };
+            renderLeaveModal();
+          });
+        }
+        sessRow.appendChild(eb);
+      }
+
+      card.appendChild(nameEl);
+      card.appendChild(dateEl);
+      card.appendChild(sessRow);
+      grid.appendChild(card);
+    });
+
+    let count = 0;
+    const maxSessions = rider.sessions.length * 5;
+    Object.values(pendingLeave).forEach(s => {
+      if (s.morning) count++;
+      if (s.evening) count++;
+    });
+
+    const countEl = document.getElementById('leaveCountVal');
+    countEl.textContent = `${count} / ${maxSessions}`;
+    const valid = count >= 3;
+    countEl.className = 'leave-count-val ' + (count === 0 ? 'err' : count < 3 ? 'warn' : 'ok');
+
+    const applyBtn = document.getElementById('leaveApplyBtn');
+    applyBtn.disabled = count === 0;
+    if (count === 0) applyBtn.textContent = 'Apply Leave';
+    else if (!valid) applyBtn.textContent = `Save Leave — no dues adjustment (${3 - count} more to adjust)`;
+    else applyBtn.textContent = `Apply Leave (${count} session${count > 1 ? 's' : ''})`;
+    applyBtn.style.background = count === 0 ? 'var(--text3)' : valid ? 'var(--red)' : 'var(--orange)';
+
+    const existingLeave = getRiderLeaveSetForWeek(rider.key, monday);
+    const cancelBtn = document.getElementById('leaveCancelLeaveBtn');
+    cancelBtn.style.display = existingLeave.size > 0 ? '' : 'none';
+  }
+
+
+  document.getElementById('leaveWeekPrev').addEventListener('click', () => {
+    const prev = new Date(leaveCtx.monday); prev.setDate(prev.getDate() - 7);
+    leaveCtx.monday = prev;
+    leaveCtx.pendingLeave = getRiderLeaveSessionMapForWeek(leaveCtx.rider.key, prev, leaveCtx.rider);
+    renderLeaveModal();
+  });
+  document.getElementById('leaveWeekNext').addEventListener('click', () => {
+    const next = new Date(leaveCtx.monday); next.setDate(next.getDate() + 7);
+    leaveCtx.monday = next;
+    leaveCtx.pendingLeave = getRiderLeaveSessionMapForWeek(leaveCtx.rider.key, next, leaveCtx.rider);
+    renderLeaveModal();
   });
 
-  document.getElementById('payGpayBtn').addEventListener('click', () => {
-    if (!paySheetCtx.selected.size) return;
-    const totalAmt = Math.round(getSelectedPayTotal());
-    const selectedWks = [...paySheetCtx.selected];
-    const label = selectedWks.length === 1
-      ? paySheetCtx.weeks.find(w => w.wk === selectedWks[0])?.details.label || 'Carpool'
-      : `${selectedWks.length} weeks`;
-    const upi = buildUpiParams(totalAmt, label);
-    // Store multi-week pending for GPay confirm
-    gpayPendingPerson = {
-      name: paySheetCtx.rider.name,
-      amount: totalAmt,
-      sk: null, // handled as multi-week below
-      multiWeeks: selectedWks.map(wk => `${paySheetCtx.rider.name}_${wk}`)
-    };
-    closePaySheet();
-    fireGpay(`gpay://upi/pay?${upi}`, `upi://pay?${upi}`);
+  document.getElementById('leaveCancelLeaveBtn').addEventListener('click', () => {
+    const { rider, monday } = leaveCtx;
+    const allDays = getWeekDays(monday).map(toDateStr);
+    clearLeaveFromData(rider.key, allDays, rider);
+    leaveCtx.pendingLeave = getRiderLeaveSessionMapForWeek(rider.key, monday, rider);
+    saveData();
+    renderAll();
+    renderLeaveModal();
+    showToast('✓ Leave cancelled — dues restored');
   });
+
+  document.getElementById('leaveApplyBtn').addEventListener('click', () => {
+    const { rider, monday, pendingLeave } = leaveCtx;
+    // Count total sessions selected
+    let count = 0;
+    Object.values(pendingLeave).forEach(s => { if (s.morning) count++; if (s.evening) count++; });
+    // Clear all leave for this week first, then apply selected sessions
+    const allDays = getWeekDays(monday).map(toDateStr);
+    clearLeaveFromData(rider.key, allDays, rider);
+    applyLeaveToData(rider.key, pendingLeave, rider);
+    saveData();
+    renderAll();
+    closeLeaveModal();
+    const wk = getWeekRange(monday);
+    const sk = `${rider.name}_${wk.key}`;
+    const alreadySettled = !!settlements[sk];
+    const duesAdjusted = count >= 3;
+    showToast(duesAdjusted
+      ? `🏖 ${count}-session leave saved — dues adjusted${alreadySettled ? ' (recalculated)' : ''}`
+      : `🏖 ${count}-session leave saved — dues unchanged (need ${3 - count} more to adjust)`);
+  });
+
+  document.getElementById('leaveCancel').addEventListener('click', closeLeaveModal);
+  document.getElementById('leaveOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeLeaveModal(); });
 
   // ── GPay ─────────────────────────────────────────────
   let gpayPendingPerson=null;
-  function fireGpay(url,fallback){
-    const i=document.createElement('iframe');i.style.display='none';document.body.appendChild(i);i.src=url;
-    setTimeout(()=>{document.body.removeChild(i);if(document.hasFocus()){const f=document.createElement('iframe');f.style.display='none';document.body.appendChild(f);f.src=fallback;setTimeout(()=>document.body.removeChild(f),1500);}},1500);
-  }
+  function fireGpay(url,fallback){const i=document.createElement('iframe');i.style.display='none';document.body.appendChild(i);i.src=url;setTimeout(()=>{document.body.removeChild(i);if(document.hasFocus()){const f=document.createElement('iframe');f.style.display='none';document.body.appendChild(f);f.src=fallback;setTimeout(()=>document.body.removeChild(f),1500);}},1500);}
   function buildUpiParams(amt,label){return`pa=surya.ud92-1@okhdfcbank&pn=Surya&am=${Math.round(amt)}&cu=INR&tn=${encodeURIComponent('Narayana Carpool '+label)}`;}
 
   // ── Grouped weeks ─────────────────────────────────────
@@ -862,42 +1074,34 @@
   let renderAll=function(){renderPersonalDashboard();renderAdminDues();if(document.getElementById('tabHistory').classList.contains('active'))renderHistory();};
 
   // ── Admin captain week selector ───────────────────────
-  let _adminDisplayMonday = null;
-  function getAdminDisplayMonday() {
-    if (!_adminDisplayMonday) _adminDisplayMonday = getMonday(realToday);
-    return _adminDisplayMonday;
-  }
+  let _adminDisplayMonday=null;
+  function getAdminDisplayMonday(){if(!_adminDisplayMonday)_adminDisplayMonday=getMonday(realToday);return _adminDisplayMonday;}
 
-  function renderCaptainGridForWeek(monday) {
-    const container = document.getElementById('captainAttendanceCard');
-    if (!container || currentRole !== 'admin') return;
-    const days = getWeekDays(monday);
-    const prevMonday = new Date(monday); prevMonday.setDate(prevMonday.getDate() - 7);
-    const nextMonday = new Date(monday); nextMonday.setDate(nextMonday.getDate() + 7);
-    const currentWeekMonday = getMonday(realToday);
-    const canGoNext = nextMonday <= currentWeekMonday;
-    const isCurrentWeek = toDateStr(monday) === toDateStr(currentWeekMonday);
-    const weekLabel = isCurrentWeek ? 'This Week' : `${fmtDateShort(monday)} – ${fmtDateShort(days[4])}`;
-
-    const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri'];
-    let gridHtml = '';
-    days.forEach((d, i) => {
-      const ds = toDateStr(d);
-      const isFuture = d > realToday;
-      const entry = data[ds] || {};
-      const mAbs = entry.morning && entry.morning.captain === false;
-      const eAbs = entry.evening && entry.evening.captain === false;
-      const both = mAbs && eAbs, either = mAbs || eAbs;
-      let cls = isFuture ? 'is-future' : both ? 'absent' : either ? 'absent-partial' : 'present';
-      const sub = both ? 'M+E absent' : mAbs ? 'Morn off' : eAbs ? 'Eve off' : 'Present';
-      gridHtml += `<button class="captain-day-btn ${cls}" data-date="${ds}" ${isFuture ? 'disabled' : ''} title="${isFuture ? 'Future date' : 'Click to edit'}">
-        <span class="cd-name">${DAY_NAMES[i]}</span>
-        <span class="cd-date">${d.getDate()}</span>
-        <span class="cd-sub">${sub}</span>
+  function renderCaptainGridForWeek(monday){
+    const container=document.getElementById('captainAttendanceCard');
+    if(!container||currentRole!=='admin')return;
+    const days=getWeekDays(monday);
+    const prevMonday=new Date(monday);prevMonday.setDate(prevMonday.getDate()-7);
+    const nextMonday=new Date(monday);nextMonday.setDate(nextMonday.getDate()+7);
+    const currentWeekMonday=getMonday(realToday);
+    const canGoNext=nextMonday<=currentWeekMonday;
+    const isCurrentWeek=toDateStr(monday)===toDateStr(currentWeekMonday);
+    const weekLabel=isCurrentWeek?'This Week':`${fmtDateShort(monday)} – ${fmtDateShort(days[4])}`;
+    const DAY_NAMES=['Mon','Tue','Wed','Thu','Fri'];
+    let gridHtml='';
+    days.forEach((d,i)=>{
+      const ds=toDateStr(d),isFuture=d>realToday;
+      const entry=data[ds]||{};
+      const mAbs=entry.morning&&entry.morning.captain===false;
+      const eAbs=entry.evening&&entry.evening.captain===false;
+      const both=mAbs&&eAbs,either=mAbs||eAbs;
+      const cls=isFuture?'is-future':both?'absent':either?'absent-partial':'present';
+      const sub=both?'M+E absent':mAbs?'Morn off':eAbs?'Eve off':'Present';
+      gridHtml+=`<button class="captain-day-btn ${cls}" data-date="${ds}" ${isFuture?'disabled':''}>
+        <span class="cd-name">${DAY_NAMES[i]}</span><span class="cd-date">${d.getDate()}</span><span class="cd-sub">${sub}</span>
       </button>`;
     });
-
-    container.innerHTML = `<div class="card" style="margin-bottom:0">
+    container.innerHTML=`<div class="card" style="margin-bottom:0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div class="card-title" style="margin-bottom:0">🚗 Captain Attendance</div>
         <div style="display:flex;align-items:center;gap:6px">
@@ -916,40 +1120,25 @@
         💡 Tap a day to mark morning / evening leave. Passenger costs are waived for absent sessions.
       </div>
     </div>`;
-
-    container.querySelectorAll('.captain-day-btn:not([disabled])').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const ds = btn.dataset.date;
-        openCaptainSessModal(ds, parseDate(ds));
-      });
+    container.querySelectorAll('.captain-day-btn:not([disabled])').forEach(btn=>{
+      btn.addEventListener('click',()=>openCaptainSessModal(btn.dataset.date,parseDate(btn.dataset.date)));
     });
-    document.getElementById('captainWeekPrev')?.addEventListener('click', () => {
-      _adminDisplayMonday = prevMonday;
-      renderCaptainGridForWeek(_adminDisplayMonday);
-    });
-    document.getElementById('captainWeekNext')?.addEventListener('click', () => {
-      if (!canGoNext) return;
-      _adminDisplayMonday = nextMonday;
-      renderCaptainGridForWeek(_adminDisplayMonday);
-    });
+    document.getElementById('captainWeekPrev')?.addEventListener('click',()=>{_adminDisplayMonday=prevMonday;renderCaptainGridForWeek(_adminDisplayMonday);});
+    document.getElementById('captainWeekNext')?.addEventListener('click',()=>{if(!canGoNext)return;_adminDisplayMonday=nextMonday;renderCaptainGridForWeek(_adminDisplayMonday);});
   }
 
-  // ── Captain leave notes helper ────────────────────────
-  // Returns an array of leave descriptions for a given week
   function getCaptainLeaveNotes(weekMonday){
     const notes=[];
-    const days=['Mon','Tue','Wed','Thu','Fri'];
-    getWeekDays(weekMonday).forEach((d,i)=>{
-      const ds=toDateStr(d);
-      const entry=data[ds];
+    getWeekDays(weekMonday).forEach(d=>{
+      const ds=toDateStr(d),entry=data[ds];
       if(!entry)return;
       const mAbs=entry.morning&&entry.morning.captain===false;
       const eAbs=entry.evening&&entry.evening.captain===false;
       if(!mAbs&&!eAbs)return;
       const dateLabel=d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-      if(mAbs&&eAbs) notes.push(`${dateLabel} — both sessions (dues adjusted)`);
-      else if(mAbs)  notes.push(`${dateLabel} — morning session (dues adjusted)`);
-      else            notes.push(`${dateLabel} — evening session (dues adjusted)`);
+      if(mAbs&&eAbs)notes.push(`${dateLabel} — both sessions`);
+      else if(mAbs)notes.push(`${dateLabel} — morning`);
+      else notes.push(`${dateLabel} — evening`);
     });
     return notes;
   }
@@ -978,57 +1167,22 @@
     [['morning',morning],['evening',evening]].forEach(([sess,present])=>{
       const riders=sess==='morning'?getMorningRiders():getEveningRiders();
       data[dateStr][sess].captain=present;riders.forEach(k=>{if(k!=='captain')data[dateStr][sess][k]=present;});
+      // If captain is now absent for this session, clear any rider leave marked for it
+      if (!present) {
+        cfg.riders.forEach(r => {
+          if (data[dateStr].leave && data[dateStr].leave[r.key]) {
+            data[dateStr].leave[r.key][sess] = false;
+          }
+        });
+      }
     });
-    saveData();closeCaptainSessModal();
-    renderPersonalDashboard();renderAdminDues();
+    saveData();closeCaptainSessModal();renderPersonalDashboard();renderAdminDues();
     showToast(!morning&&!evening?'🚗 Captain absent all day':morning&&evening?'🚗 Captain present all sessions':'🚗 Captain session updated');
   }
   function closeCaptainSessModal(){document.getElementById('captainSessModal').classList.remove('open');}
   document.getElementById('captainSessCancel').addEventListener('click',closeCaptainSessModal);
   document.getElementById('captainSessConfirm').addEventListener('click',applyCaptainSess);
   document.getElementById('captainSessModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeCaptainSessModal();});
-
-  // ── Rider day session modal ───────────────────────────
-  let riderSessCtx={dateStr:null,rider:null,morning:true,evening:true};
-  function openRiderSessModal(dateStr,rider){
-    initDate(dateStr);
-    const hasMorn=rider.sessions.includes('morning');
-    const hasEve=rider.sessions.includes('evening');
-    const mPresent=hasMorn?(data[dateStr].morning[rider.key]!==false):null;
-    const ePresent=hasEve?(data[dateStr].evening[rider.key]!==false):null;
-    riderSessCtx={dateStr,rider,morning:mPresent,evening:ePresent};
-    const dateObj=parseDate(dateStr);
-    document.getElementById('riderSessTitle').textContent=`My Attendance — ${dateObj.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}`;
-    buildRiderSessPicker();
-    document.getElementById('riderSessModal').classList.add('open');
-  }
-  function buildRiderSessPicker(){
-    const c=document.getElementById('riderSessions');c.innerHTML='';
-    const{rider,morning,evening}=riderSessCtx;
-    const sessions=[
-      ...(rider.sessions.includes('morning')?[['morning','🌅 Morning',morning]]:[]),
-      ...(rider.sessions.includes('evening')?[['evening','🌆 Evening',evening]]:[])
-    ];
-    sessions.forEach(([sess,label,present])=>{
-      const row=document.createElement('div');row.className=`cs-sess-row${!present?' sess-absent':''}`;
-      row.innerHTML=`<span class="cs-sess-label">${label}</span><span class="cs-sess-status">${present?'✓ Present':'✗ Absent'}</span>`;
-      row.addEventListener('click',()=>{riderSessCtx[sess]=!riderSessCtx[sess];buildRiderSessPicker();});
-      c.appendChild(row);
-    });
-  }
-  function applyRiderSess(){
-    const{dateStr,rider,morning,evening}=riderSessCtx;
-    initDate(dateStr);
-    if(rider.sessions.includes('morning')&&morning!==null)data[dateStr].morning[rider.key]=morning;
-    if(rider.sessions.includes('evening')&&evening!==null)data[dateStr].evening[rider.key]=evening;
-    saveData();closeRiderSessModal();
-    renderPersonalDashboard();
-    showToast(morning===false&&evening===false?'Marked absent for the day':morning===true&&evening===true?'Marked present for all sessions':'Session attendance updated');
-  }
-  function closeRiderSessModal(){document.getElementById('riderSessModal').classList.remove('open');}
-  document.getElementById('riderSessCancel').addEventListener('click',closeRiderSessModal);
-  document.getElementById('riderSessConfirm').addEventListener('click',applyRiderSess);
-  document.getElementById('riderSessModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeRiderSessModal();});
 
   // ── Admin Dues ────────────────────────────────────────
   function renderAdminDues(){
@@ -1062,33 +1216,32 @@
         const sk=`${rider.name}_${wk.key}`;
         const sessLabel=rider.sessions.map(s=>s==='morning'?'🌅':'🌆').join(' ');
         const amtClass=isOngoing?'projected':isSettled?'settled':isOver&&amt>0?'pending':'';
+        // Show leave chip if rider had approved leave this week
+        const leaveDays=getRiderLeaveDaysInWeek(rider.key,wk.monday);
+        const leaveChip=leaveDays>=3?`<span class="leave-chip">🏖 ${leaveDays}d leave</span>`:'';
         const riderRow=document.createElement('div');riderRow.className='dues-rider-row';
         let actionsHtml='';
         if(!isOngoing&&isOver&&amt>0){
           if(!isSettled)actionsHtml=`<button class="action-btn btn-pay" data-pay="${sk}">Mark Paid</button>`;
           else actionsHtml=`<button class="action-btn btn-revert" data-revert="${sk}">Revert</button>`;
         }
-        riderRow.innerHTML=`<div class="dues-rider-left"><div class="dues-rider-dot" style="background:${rider.color}"></div><div><div class="dues-rider-name">${rider.name}</div><div class="dues-rider-sessions">${sessLabel}</div></div></div><div class="dues-rider-right"><span class="dues-rider-amt ${amtClass}">${amt>0?'₹'+Math.round(amt):'—'}</span>${actionsHtml}</div>`;
+        riderRow.innerHTML=`<div class="dues-rider-left"><div class="dues-rider-dot" style="background:${rider.color}"></div><div><div class="dues-rider-name">${rider.name} ${leaveChip}</div><div class="dues-rider-sessions">${sessLabel}</div></div></div><div class="dues-rider-right"><span class="dues-rider-amt ${amtClass}">${amt>0?'₹'+Math.round(amt):'—'}</span>${actionsHtml}</div>`;
         riderRow.querySelector('[data-pay]')?.addEventListener('click',e=>{settlements[e.currentTarget.dataset.pay]=true;saveSettlements();renderAdminDues();renderPersonalDashboard();showToast('✓ Marked as paid');});
         riderRow.querySelector('[data-revert]')?.addEventListener('click',e=>{settlements[e.currentTarget.dataset.revert]=false;saveSettlements();renderAdminDues();renderPersonalDashboard();renderHistory();showToast('↩ Payment reverted');});
         body.appendChild(riderRow);
       });
       hd.addEventListener('click',()=>{const ch=hd.querySelector('.dues-week-chevron'),open=!body.classList.contains('collapsed');body.classList.toggle('collapsed',open);ch.classList.toggle('open',!open);});
-
-      // Captain leave notes for this week
       if(!isOngoing&&isOver){
         const leaveNotes=getCaptainLeaveNotes(wk.monday);
         if(leaveNotes.length){
-          const noteEl=document.createElement('div');
-          noteEl.className='captain-leave-note';
-          noteEl.style.margin='8px 14px 0';
+          const noteEl=document.createElement('div');noteEl.className='captain-leave-note';noteEl.style.margin='8px 14px 0';
           noteEl.innerHTML=`<span class="captain-leave-note-icon">🚗</span><span><strong>Captain on leave:</strong> ${leaveNotes.join('; ')}</span>`;
           body.prepend(noteEl);
         }
       }
       block.appendChild(hd);block.appendChild(body);container.appendChild(block);
     });
-    if(!weekList.length)container.innerHTML='<div class="no-dues">No weeks to show yet.</div>';
+    if(!weekList.length)container.innerHTML='<div style="font-size:13px;color:var(--text3);padding:6px 0">No weeks to show yet.</div>';
   }
 
   // ── Personal Dashboard ────────────────────────────────
@@ -1102,10 +1255,8 @@
 
   function renderAdminDashSummary(container){
     const grouped=buildGroupedWeeks();
-    // Render captain attendance card first (separate div, updated independently)
-    let captainCardHtml = `<div id="captainAttendanceCard"></div>`;
-    let html=`<div class="dash-card">
-      <div class="dash-section-title" style="margin-bottom:10px">📊 Outstanding</div>`;
+    let captainCardHtml=`<div id="captainAttendanceCard"></div>`;
+    let html=`<div class="dash-card"><div class="dash-section-title" style="margin-bottom:10px">📊 Outstanding</div>`;
     cfg.riders.forEach(rider=>{
       let outstanding=0;
       Object.entries(grouped[rider.name]||{}).forEach(([wk,d])=>{const mon=parseDate(wk.split('_')[0]);if(weekIsOver(mon)&&!settlements[`${rider.name}_${wk}`]&&d.amount>0)outstanding+=d.amount;});
@@ -1115,7 +1266,7 @@
       </div>`;
     });
     html+=`</div>`;
-    container.innerHTML = captainCardHtml + html;
+    container.innerHTML=captainCardHtml+html;
     renderCaptainGridForWeek(getAdminDisplayMonday());
   }
 
@@ -1128,7 +1279,6 @@
       if(weekIsOver(mon)&&!settlements[`${rider.name}_${wk}`]&&d.amount>0){outstanding+=d.amount;pendingCount++;unsettled.push({wk,details:d});}
     });
     unsettled.sort((a,b)=>a.wk<b.wk?1:-1);
-    const visibleDues=[...unsettled.slice(0,4),...unsettled.slice(4)];
 
     const now=istNow();
     const nextMon=getMonday(new Date(now.getTime()+7*24*60*60*1000));
@@ -1138,30 +1288,30 @@
     const initials=rider.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
     const monday=getMonday(realToday);
     const DAY_NAMES=['Mon','Tue','Wed','Thu','Fri'];
-    let captainGridHtml='';
-    getWeekDays(monday).forEach((d,i)=>{
-      const ds=toDateStr(d),isFuture=d>realToday;
-      const mAbs=data[ds]&&data[ds].morning&&data[ds].morning.captain===false;
-      const eAbs=data[ds]&&data[ds].evening&&data[ds].evening.captain===false;
-      const both=mAbs&&eAbs,either=mAbs||eAbs;
-      const cls=isFuture?'future':both?'absent':either?'absent-partial':'present';
-      const sub=both?'M+E':mAbs?'Morn':eAbs?'Eve':'';
-      captainGridHtml+=`<button class="dash-day ${cls}" data-date="${ds}" ${isFuture?'disabled':''}><span class="dd-name">${DAY_NAMES[i]}</span><span class="dd-num">${d.getDate()}</span>${sub?`<span class="dd-sub">${sub}</span>`:''}</button>`;
-    });
+    const currentLeaveDays=getRiderLeaveDaysInWeek(rider.key,monday);
 
+    // Due blocks
     let dueBlocksHtml='';
-    if(!visibleDues.length){
+    if(!unsettled.length){
       dueBlocksHtml=`<div style="padding:12px 0;font-size:13px;color:var(--text2);text-align:center">✓ All dues cleared</div>`;
     } else {
-      visibleDues.forEach(({wk,details})=>{
+      unsettled.forEach(({wk,details})=>{
+        const sk=`${rider.name}_${wk}`;
         const leaveNotes=getCaptainLeaveNotes(details.monday);
         const leaveHtml=leaveNotes.length
-          ?`<div class="captain-leave-note" style="margin-top:6px"><span class="captain-leave-note-icon">🚗</span><span><strong>Captain on leave:</strong> ${leaveNotes.join('; ')}</span></div>`:'';
+          ?`<div class="captain-leave-note"><span class="captain-leave-note-icon">🚗</span><span><strong>Captain on leave:</strong> ${leaveNotes.join('; ')}</span></div>`:'';
+        const riderLeaveSessions=getRiderLeaveSessionsInWeek(rider.key,details.monday,rider);
+        const riderLeaveHtml=riderLeaveSessions>=3
+          ?`<div style="display:flex;align-items:center;gap:6px;padding:0 12px 8px;font-size:11px;color:var(--red)">🏖 Your ${riderLeaveSessions}-session leave applied — dues adjusted</div>`:'';
         dueBlocksHtml+=`<div class="dash-week-block unpaid">
           <div class="dash-week-block-hd">
-            <div><div class="dash-week-label">${details.label}</div><div class="dash-week-amt orange">₹${Math.round(details.amount)}</div></div>
-            <span class="dash-badge due">Unpaid</span>
+            <div>
+              <div class="dash-week-label">${details.label}</div>
+              <div class="dash-week-amt orange">₹${Math.round(details.amount)}</div>
+            </div>
+            <button class="action-btn btn-pay dash-mark-paid-btn" data-sk="${sk}" style="font-size:11px;padding:5px 10px">✓ Mark Paid</button>
           </div>
+          ${riderLeaveHtml}
           ${leaveHtml?`<div style="padding:0 12px 10px">${leaveHtml}</div>`:''}
         </div>`;
       });
@@ -1169,27 +1319,52 @@
         <span style="font-size:13px;color:var(--text2)">Total due</span>
         <span style="font-size:18px;font-weight:700;color:var(--orange)">₹${Math.round(outstanding)}</span>
       </div>
-      <button class="make-payment-btn" id="makePaymentBtn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        Make Payment
-      </button>`;
+      <button class="make-payment-btn" id="makePaymentBtn">⚡ Make Payment</button>`;
     }
 
     const settledList=Object.entries(myWeeks).filter(([wk,d])=>settlements[`${rider.name}_${wk}`]&&d.amount>0).sort(([a],[b])=>a<b?1:-1).slice(0,5);
     let histHtml=settledList.length
       ? settledList.map(([wk,d])=>{
           const sk=`${rider.name}_${wk}`;
-          return `<div class="dash-week-block paid">
-            <div class="dash-week-block-hd">
-              <div><div class="dash-week-label">${d.label}</div><div class="dash-week-amt green">₹${Math.round(d.amount)}</div></div>
-              <div style="display:flex;align-items:center;gap:8px">
-                <span class="dash-badge paid">✓ Paid</span>
-                <button class="action-btn btn-revert" style="font-size:11px;padding:4px 9px" data-revert="${sk}">Revert</button>
-              </div>
-            </div>
-          </div>`;
+          return `<div class="dash-week-block paid"><div class="dash-week-block-hd"><div><div class="dash-week-label">${d.label}</div><div class="dash-week-amt green">₹${Math.round(d.amount)}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="dash-badge paid">✓ Paid</span><button class="action-btn btn-revert" style="font-size:11px;padding:4px 9px" data-revert="${sk}">Revert</button></div></div></div>`;
         }).join('')
       : `<div style="padding:12px 0;font-size:13px;color:var(--text2);text-align:center">No payment history yet</div>`;
+
+    // Build rider leave day strip (like captain grid)
+    const riderDisplayDays = getWeekDays(monday);
+    const DAY_NAMES_STRIP = ['Mon','Tue','Wed','Thu','Fri'];
+    let riderGridHtml = '';
+    riderDisplayDays.forEach((d, i) => {
+      const ds = toDateStr(d);
+      const isFuture = d > realToday;
+      const lv = data[ds] && data[ds].leave && data[ds].leave[rider.key];
+      const mLeave = rider.sessions.includes('morning') && lv && lv.morning;
+      const eLeave = rider.sessions.includes('evening') && lv && lv.evening;
+      const captainMornOff = data[ds] && data[ds].morning && data[ds].morning.captain === false;
+      const captainEveOff  = data[ds] && data[ds].evening && data[ds].evening.captain === false;
+      const both = mLeave && eLeave;
+      const either = mLeave || eLeave;
+      const cls = isFuture ? 'is-future' : both ? 'absent' : either ? 'absent-partial' : 'present';
+      const bothSessions = rider.sessions.includes('morning') && rider.sessions.includes('evening');
+      const sub = both ? 'M+E leave' : mLeave ? 'Morn off' : eLeave ? 'Eve off' : (captainMornOff && captainEveOff) ? 'No trip' : 'Present';
+      riderGridHtml += `<button class="captain-day-btn ${cls}" data-date="${ds}" ${isFuture ? 'disabled' : ''}>
+        <span class="cd-name">${DAY_NAMES_STRIP[i]}</span><span class="cd-date">${d.getDate()}</span><span class="cd-sub">${sub}</span>
+      </button>`;
+    });
+    const leaveStatusHtml = `<div id="riderLeaveGrid" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700">🏖 This Week Leave</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:#2e7d32;display:inline-block"></span>Present</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:var(--orange);display:inline-block"></span>Partial</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:#9e9e9e;display:inline-block"></span>Full leave</span>
+        </div>
+      </div>
+      <div class="captain-days-grid">${riderGridHtml}</div>
+      <div style="margin-top:8px;padding:8px 10px;background:var(--blue-soft);border:1px solid var(--blue-border);border-radius:8px;font-size:11px;color:var(--blue)">
+        💡 Tap a day to mark or edit your leave sessions. Minimum 3 sessions required for dues adjustment.
+      </div>
+    </div>`;
 
     container.innerHTML=`<div class="dash-card">
       <div class="dash-user-row">
@@ -1207,10 +1382,12 @@
         </div>
       </div>
       ${isRiderPaused(rider)?`<div style="background:var(--yellow-soft);border:1px solid var(--yellow-border);border-radius:9px;padding:10px 12px;font-size:12px;color:var(--yellow);font-weight:600;margin-bottom:14px">⏸ Account paused · ${getPauseLabel(rider)}<br><span style="font-weight:400;font-size:11px">No dues are accruing during this period.</span></div>`:''}
+      ${leaveStatusHtml}
       <div class="dash-metric-row">
         <div class="dash-metric"><div class="dash-metric-label">This week (est.)</div><div class="dash-metric-value">₹${Math.round(thisWeekEst)}</div></div>
         <div class="dash-metric"><div class="dash-metric-label">Weeks pending</div><div class="dash-metric-value ${pendingCount>0?'warn':'ok'}">${pendingCount}</div></div>
       </div>
+
       <div class="dash-tab-row">
         <button class="dash-tab active" id="dashTabDue" onclick="switchDashTab('due')">Dues</button>
         <button class="dash-tab" id="dashTabHist" onclick="switchDashTab('hist')">History</button>
@@ -1219,20 +1396,65 @@
       <div id="dashHistPanel" style="display:none">${histHtml}</div>
     </div>`;
 
-    // Day strip click → open rider session modal
-    container.querySelectorAll('.dash-day[data-date]').forEach(btn=>{
-      btn.addEventListener('click',()=>openRiderSessModal(btn.dataset.date,rider));
+    // Wire up rider leave day strip
+    document.querySelectorAll('#riderLeaveGrid .captain-day-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const d = parseDate(btn.dataset.date);
+        openLeaveModalForDay(rider, d);
+      });
     });
+    document.getElementById('makePaymentBtn')?.addEventListener('click',()=>openPaymentSelector(rider,unsettled));
 
-    // Make Payment button
-    container.querySelector('#makePaymentBtn')?.addEventListener('click',()=>{
-      openPaySheet(rider,visibleDues);
+    container.querySelectorAll('.dash-mark-paid-btn').forEach(btn=>{
+      btn.addEventListener('click',e=>{const sk=e.currentTarget.dataset.sk;settlements[sk]=true;saveSettlements();renderPersonalDashboard();showToast('✓ Marked as paid');});
     });
-
     container.querySelectorAll('[data-revert]').forEach(btn=>{
       btn.addEventListener('click',e=>{const sk=e.currentTarget.dataset.revert;settlements[sk]=false;saveSettlements();renderPersonalDashboard();showToast('↩ Payment reverted');});
     });
   }
+
+  // ── Payment Selector ──────────────────────────────────
+  let psCtx={rider:null,weeks:[],selected:new Set()};
+  function openPaymentSelector(rider,unsettledWeeks){
+    psCtx.rider=rider;psCtx.weeks=unsettledWeeks;psCtx.selected=new Set(unsettledWeeks.map(u=>u.wk));
+    document.getElementById('psSub').textContent=`${rider.name} · select weeks to include`;
+    renderPsWeekList();document.getElementById('paymentSelectorOverlay').classList.add('open');
+  }
+  function renderPsWeekList(){
+    const list=document.getElementById('psWeekList');list.innerHTML='';
+    let total=0;
+    psCtx.weeks.forEach(({wk,details})=>{
+      const sel=psCtx.selected.has(wk);if(sel)total+=details.amount;
+      const row=document.createElement('div');row.className=`ps-week-row${sel?' selected':''}`;
+      row.innerHTML=`<div class="ps-week-left"><div class="ps-checkbox"><span class="ps-checkbox-tick">✓</span></div><span class="ps-week-label">${details.label}</span></div><span class="ps-week-amt">₹${Math.round(details.amount)}</span>`;
+      row.addEventListener('click',()=>{if(psCtx.selected.has(wk))psCtx.selected.delete(wk);else psCtx.selected.add(wk);renderPsWeekList();});
+      list.appendChild(row);
+    });
+    document.getElementById('psTotalAmt').textContent=total>0?`₹${Math.round(total)}`:'₹0';
+    const btn=document.getElementById('psPayBtn');btn.disabled=total===0;btn.textContent=total>0?`⚡ Pay ₹${Math.round(total)} via GPay`:'⚡ Pay Now via GPay';btn._total=Math.round(total);
+  }
+  function closePaymentSelector(){document.getElementById('paymentSelectorOverlay').classList.remove('open');}
+  document.getElementById('psCancel').addEventListener('click',closePaymentSelector);
+  document.getElementById('paymentSelectorOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closePaymentSelector();});
+  document.getElementById('psPayBtn').addEventListener('click',()=>{
+    const total=document.getElementById('psPayBtn')._total;if(!total||total===0)return;
+    const selectedWeeks=[...psCtx.selected];
+    const label=selectedWeeks.length===1?psCtx.weeks.find(u=>u.wk===selectedWeeks[0])?.details?.label||'dues':`${selectedWeeks.length} weeks`;
+    const upi=buildUpiParams(total,label);
+    gpayPendingPerson={name:psCtx.rider.name,amount:total,selectedWeeks:[...psCtx.selected],riderName:psCtx.rider.name};
+    closePaymentSelector();fireGpay(`gpay://upi/pay?${upi}`,`upi://pay?${upi}`);
+    document.getElementById('gpayConfirmSub').textContent=`₹${total} to Surya via GPay`;
+  });
+
+  // ── GPay confirm ──────────────────────────────────────
+  function closeGpayConfirm(){document.getElementById('gpayConfirmOverlay').classList.remove('open');gpayPendingPerson=null;}
+  document.getElementById('gpayConfirmYes').addEventListener('click',()=>{
+    if(gpayPendingPerson?.selectedWeeks){gpayPendingPerson.selectedWeeks.forEach(wk=>{settlements[`${gpayPendingPerson.riderName}_${wk}`]=true;});saveSettlements();renderPersonalDashboard();showToast(`✓ ${gpayPendingPerson.selectedWeeks.length} week(s) marked as paid`);}
+    closeGpayConfirm();
+  });
+  document.getElementById('gpayConfirmNo').addEventListener('click',closeGpayConfirm);
+  document.getElementById('gpayConfirmOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeGpayConfirm();});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&gpayPendingPerson)setTimeout(()=>document.getElementById('gpayConfirmOverlay').classList.add('open'),400);});
 
   window.switchDashTab=function(tab){
     document.getElementById('dashTabDue')?.classList.toggle('active',tab==='due');
@@ -1261,7 +1483,7 @@
       });
       anyShown=true;
     });
-    if(!anyShown){const e=document.createElement('div');e.className='no-dues';e.textContent='No payments recorded yet.';container.appendChild(e);}
+    if(!anyShown){const e=document.createElement('div');e.style='font-size:13px;color:var(--text3);padding:6px 0';e.textContent='No payments recorded yet.';container.appendChild(e);}
   }
 
   // ── Tab switching ─────────────────────────────────────
@@ -1279,137 +1501,76 @@
   document.getElementById('tabHistoryBtn').addEventListener('click',()=>setActiveTab('history'));
 
   // ── Pause helpers ─────────────────────────────────────
-  function isRiderPaused(rider){
-    if(!rider.pausedFrom||!rider.pausedUntil)return false;
-    const now=istNow(),pFrom=parseDate(rider.pausedFrom),pUntil=parseDate(rider.pausedUntil);
-    return now>=pFrom&&now<=pUntil;
-  }
-  function getPauseLabel(rider){
-    if(!rider.pausedFrom||!rider.pausedUntil)return'';
-    return`${fmtDateShort(parseDate(rider.pausedFrom))} – ${fmtDateShort(parseDate(rider.pausedUntil))}`;
-  }
+  function isRiderPaused(rider){if(!rider.pausedFrom||!rider.pausedUntil)return false;const now=istNow(),pFrom=parseDate(rider.pausedFrom),pUntil=parseDate(rider.pausedUntil);return now>=pFrom&&now<=pUntil;}
+  function getPauseLabel(rider){if(!rider.pausedFrom||!rider.pausedUntil)return'';return`${fmtDateShort(parseDate(rider.pausedFrom))} – ${fmtDateShort(parseDate(rider.pausedUntil))}`;}
 
-  // ── Pause modal (admin only) ──────────────────────────
+  // ── Pause modal ───────────────────────────────────────
   let pauseCtx={riderIdx:null};
   function openPauseModal(riderIdx){
     if(currentRole!=='admin'){showToast('⚠ Admin access required');return;}
-    pauseCtx={riderIdx};
-    const rider=adminDraft.riders[riderIdx];
+    pauseCtx={riderIdx};const rider=adminDraft.riders[riderIdx];
     document.getElementById('pauseTitle').textContent=`Pause ${rider.name}`;
-    const today=toDateStr(istNow());
-    const until=new Date(istNow());until.setDate(until.getDate()+14);
-    document.getElementById('pauseFrom').value=today;
-    document.getElementById('pauseUntil').value=toDateStr(until);
+    const today=toDateStr(istNow());const until=new Date(istNow());until.setDate(until.getDate()+14);
+    document.getElementById('pauseFrom').value=today;document.getElementById('pauseUntil').value=toDateStr(until);
     document.querySelectorAll('.pause-preset').forEach(b=>b.classList.remove('selected'));
     document.querySelector('.pause-preset[data-days="14"]').classList.add('selected');
     document.getElementById('pauseOverlay').classList.add('open');
   }
   function closePauseModal(){document.getElementById('pauseOverlay').classList.remove('open');}
-
   document.querySelectorAll('.pause-preset').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      document.querySelectorAll('.pause-preset').forEach(b=>b.classList.remove('selected'));
-      btn.classList.add('selected');
+      document.querySelectorAll('.pause-preset').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');
       const days=+btn.dataset.days;
-      if(days>0){
-        const from=istNow(),until=new Date(from);until.setDate(until.getDate()+days);
-        document.getElementById('pauseFrom').value=toDateStr(from);
-        document.getElementById('pauseUntil').value=toDateStr(until);
-      }
+      if(days>0){const from=istNow(),until=new Date(from);until.setDate(until.getDate()+days);document.getElementById('pauseFrom').value=toDateStr(from);document.getElementById('pauseUntil').value=toDateStr(until);}
     });
   });
-  ['pauseFrom','pauseUntil'].forEach(id=>{
-    document.getElementById(id).addEventListener('change',()=>{
-      document.querySelectorAll('.pause-preset').forEach(b=>b.classList.remove('selected'));
-      document.querySelector('.pause-preset[data-days="0"]').classList.add('selected');
-    });
-  });
+  ['pauseFrom','pauseUntil'].forEach(id=>{document.getElementById(id).addEventListener('change',()=>{document.querySelectorAll('.pause-preset').forEach(b=>b.classList.remove('selected'));document.querySelector('.pause-preset[data-days="0"]').classList.add('selected');});});
   document.getElementById('pauseCancel').addEventListener('click',closePauseModal);
   document.getElementById('pauseOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closePauseModal();});
   document.getElementById('pauseConfirm').addEventListener('click',()=>{
     if(currentRole!=='admin'){showToast('⚠ Admin access required');return;}
-    const from=document.getElementById('pauseFrom').value;
-    const until=document.getElementById('pauseUntil').value;
+    const from=document.getElementById('pauseFrom').value,until=document.getElementById('pauseUntil').value;
     if(!from||!until){showToast('⚠ Please select both dates');return;}
     if(from>until){showToast('⚠ "From" must be before "Until"');return;}
-    const rider=adminDraft.riders[pauseCtx.riderIdx];
-    rider.pausedFrom=from;rider.pausedUntil=until;
-    cfg=JSON.parse(JSON.stringify(adminDraft));
-    saveConfig();renderAdminRiderList();closePauseModal();renderAll();
+    const rider=adminDraft.riders[pauseCtx.riderIdx];rider.pausedFrom=from;rider.pausedUntil=until;
+    cfg=JSON.parse(JSON.stringify(adminDraft));saveConfig();renderAdminRiderList();closePauseModal();renderAll();
     showToast(`⏸ ${rider.name} paused until ${fmtDateShort(parseDate(until))}`);
   });
-
   function resumeRider(riderIdx){
     if(currentRole!=='admin'){showToast('⚠ Admin access required');return;}
-    const rider=adminDraft.riders[riderIdx];
-    delete rider.pausedFrom;delete rider.pausedUntil;
-    cfg=JSON.parse(JSON.stringify(adminDraft));
-    saveConfig();renderAdminRiderList();renderAll();
-    showToast(`▶ ${rider.name} resumed`);
+    const rider=adminDraft.riders[riderIdx];delete rider.pausedFrom;delete rider.pausedUntil;
+    cfg=JSON.parse(JSON.stringify(adminDraft));saveConfig();renderAdminRiderList();renderAll();showToast(`▶ ${rider.name} resumed`);
   }
 
   // ── Admin Console ─────────────────────────────────────
   const PALETTE=['#2563eb','#3d7c47','#b45309','#dc2626','#7c3aed','#0891b2','#be185d','#0f766e','#c2410c','#4338ca'];
   let adminDraft=null;
-
   function openAdmin(){
     adminDraft=JSON.parse(JSON.stringify(cfg));
     document.getElementById('cfg-morning-cost').value=adminDraft.morningCost;
     document.getElementById('cfg-evening-cost').value=adminDraft.eveningCost;
-
-    // Show/hide read-only banner for non-admins
-    const slot=document.getElementById('adminReadOnlyBannerSlot');
-    slot.innerHTML='';
-    if(currentRole!=='admin'){
-      slot.innerHTML=`<div class="readonly-banner"><span style="font-size:16px">👁</span> Read-only — contact admin to make changes</div>`;
-    }
-
-    renderAdminRiderList();
-    document.getElementById('adminOverlay').classList.add('open');
+    const slot=document.getElementById('adminReadOnlyBannerSlot');slot.innerHTML='';
+    if(currentRole!=='admin')slot.innerHTML=`<div class="readonly-banner"><span style="font-size:16px">👁</span> Read-only — contact admin to make changes</div>`;
+    renderAdminRiderList();document.getElementById('adminOverlay').classList.add('open');
   }
   function closeAdmin(){document.getElementById('adminOverlay').classList.remove('open');}
-
   function renderAdminRiderList(){
     const list=document.getElementById('adminRiderList');list.innerHTML='';
     const isAdmin=currentRole==='admin';
     (adminDraft.riders||[]).forEach((rider,idx)=>{
       const sesLabel=rider.sessions.map(s=>s==='morning'?'🌅 Morning':'🌆 Evening').join(' · ');
       const startLabel=rider.startDate?`📅 From ${rider.startDate}`:'';
-      const linked=rider.email
-        ?`<span style="font-size:10px;background:var(--green-soft);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:1px 7px;font-weight:700;margin-left:4px">✓ Linked</span>`
-        :`<span style="font-size:10px;background:var(--orange-soft);color:var(--orange);border:1px solid var(--orange-border);border-radius:20px;padding:1px 7px;font-weight:700;margin-left:4px">Unlinked</span>`;
+      const linked=rider.email?`<span style="font-size:10px;background:var(--green-soft);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:1px 7px;font-weight:700;margin-left:4px">✓ Linked</span>`:`<span style="font-size:10px;background:var(--orange-soft);color:var(--orange);border:1px solid var(--orange-border);border-radius:20px;padding:1px 7px;font-weight:700;margin-left:4px">Unlinked</span>`;
       const emailMeta=rider.email?`<div style="font-size:10px;color:var(--text3);margin-top:1px">📧 ${rider.email}</div>`:'';
       const paused=isRiderPaused(rider);
-      const pausedMeta=paused
-        ?`<div style="font-size:10px;color:var(--yellow);margin-top:2px;font-weight:600">⏸ Paused: ${getPauseLabel(rider)}</div>`
-        :(rider.pausedFrom&&rider.pausedUntil?`<div style="font-size:10px;color:var(--text3);margin-top:2px">Last paused: ${getPauseLabel(rider)}</div>`:'');
-
-      // Action buttons — admin sees pause/resume/edit/delete; non-admin sees nothing interactive
+      const pausedMeta=paused?`<div style="font-size:10px;color:var(--yellow);margin-top:2px;font-weight:600">⏸ Paused: ${getPauseLabel(rider)}</div>`:(rider.pausedFrom&&rider.pausedUntil?`<div style="font-size:10px;color:var(--text3);margin-top:2px">Last paused: ${getPauseLabel(rider)}</div>`:'');
       let actionBtns='';
       if(isAdmin){
-        actionBtns=paused
-          ?`<button class="admin-icon-btn success" data-resume="${idx}">▶ Resume</button>`
-          :`<button class="admin-icon-btn warning" data-pause="${idx}">⏸ Pause</button>`;
-        actionBtns+=`<button class="admin-icon-btn" data-edit="${idx}">✏</button>`;
-        actionBtns+=`<button class="admin-icon-btn danger" data-del="${idx}">✕</button>`;
-      } else if(paused){
-        // Non-admin: just show a static paused label, no buttons
-        actionBtns=`<span style="font-size:10px;color:var(--yellow);font-weight:600;padding:4px 8px;background:var(--yellow-soft);border:1px solid var(--yellow-border);border-radius:7px">⏸ Paused</span>`;
-      }
-
-      const row=document.createElement('div');row.className='admin-rider-row';
-      if(paused)row.style.background='var(--yellow-soft)';
-      row.innerHTML=`
-        <div class="admin-rider-color" style="background:${rider.color};opacity:${paused?0.4:1}"></div>
-        <div class="admin-rider-info">
-          <div class="admin-rider-name" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
-            ${rider.name}${linked}${paused?`<span class="paused-badge">Paused</span>`:''}
-          </div>
-          <div class="admin-rider-meta">${sesLabel}${startLabel?' · '+startLabel:''}</div>
-          ${emailMeta}${pausedMeta}
-        </div>
-        <div class="admin-rider-actions">${actionBtns}</div>`;
-
+        actionBtns=paused?`<button class="admin-icon-btn success" data-resume="${idx}">▶ Resume</button>`:`<button class="admin-icon-btn warning" data-pause="${idx}">⏸ Pause</button>`;
+        actionBtns+=`<button class="admin-icon-btn" data-edit="${idx}">✏</button><button class="admin-icon-btn danger" data-del="${idx}">✕</button>`;
+      } else if(paused){actionBtns=`<span style="font-size:10px;color:var(--yellow);font-weight:600;padding:4px 8px;background:var(--yellow-soft);border:1px solid var(--yellow-border);border-radius:7px">⏸ Paused</span>`;}
+      const row=document.createElement('div');row.className='admin-rider-row';if(paused)row.style.background='var(--yellow-soft)';
+      row.innerHTML=`<div class="admin-rider-color" style="background:${rider.color};opacity:${paused?0.4:1}"></div><div class="admin-rider-info"><div class="admin-rider-name" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">${rider.name}${linked}${paused?`<span class="paused-badge">Paused</span>`:''}</div><div class="admin-rider-meta">${sesLabel}${startLabel?' · '+startLabel:''}</div>${emailMeta}${pausedMeta}</div><div class="admin-rider-actions">${actionBtns}</div>`;
       if(isAdmin){
         row.querySelector('[data-edit]').addEventListener('click',()=>openRiderEdit(idx));
         row.querySelector('[data-del]').addEventListener('click',()=>{if(!confirm(`Remove ${rider.name}?`))return;adminDraft.riders.splice(idx,1);renderAdminRiderList();});
@@ -1420,17 +1581,12 @@
     });
     if(!adminDraft.riders.length){const e=document.createElement('div');e.style='padding:14px;font-size:12px;color:var(--text3);text-align:center';e.textContent='No co-travellers.';list.appendChild(e);}
   }
-
   function saveAdminConfig(){
     if(currentRole!=='admin'){showToast('⚠ Admin access required');return;}
     adminDraft.morningCost=parseInt(document.getElementById('cfg-morning-cost').value)||450;
     adminDraft.eveningCost=parseInt(document.getElementById('cfg-evening-cost').value)||450;
     cfg=JSON.parse(JSON.stringify(adminDraft));saveConfig();closeAdmin();renderAll();showToast('✓ Configuration saved');
   }
-
-  // Gear icon opens admin console for all users (but shows read-only for non-admins)
-  // For non-admins: gear is hidden (display:none via applyRoleUI) so this is only reachable by admins.
-  // Belt-and-suspenders: openAdmin() itself handles the read-only banner regardless.
   document.getElementById('openAdminBtn').addEventListener('click',openAdmin);
   document.getElementById('adminClose').addEventListener('click',closeAdmin);
   document.getElementById('adminOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAdmin();});
@@ -1496,14 +1652,6 @@
 
   const _origRenderAll=renderAll;
   renderAll=function(){_origRenderAll();setTimeout(applyRoleUI,0);};
-
-  // ── GPay confirm sheet ────────────────────────────────
-  function showGpayConfirm(){if(!gpayPendingPerson)return;document.getElementById('gpayConfirmSub').textContent=`₹${gpayPendingPerson.amount} to Surya via GPay`;document.getElementById('gpayConfirmOverlay').classList.add('open');}
-  function closeGpayConfirm(){document.getElementById('gpayConfirmOverlay').classList.remove('open');gpayPendingPerson=null;}
-  document.getElementById('gpayConfirmYes').addEventListener('click',()=>{if(gpayPendingPerson?.sk){settlements[gpayPendingPerson.sk]=true;saveSettlements();renderPersonalDashboard();showToast('✓ Marked as paid');}closeGpayConfirm();});
-  document.getElementById('gpayConfirmNo').addEventListener('click',closeGpayConfirm);
-  document.getElementById('gpayConfirmOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeGpayConfirm();});
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&gpayPendingPerson)setTimeout(showGpayConfirm,400);});
 </script>
 </body>
 </html>
