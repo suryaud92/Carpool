@@ -199,14 +199,18 @@
     .leave-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
     .leave-days-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 14px; }
-    .leave-day-btn { display: flex; flex-direction: column; align-items: center; padding: 8px 4px; border-radius: 9px; border: 1.5px solid var(--border); background: var(--white); cursor: pointer; font-family: inherit; transition: all 0.12s; gap: 2px; }
+    .leave-day-btn { display: flex; flex-direction: column; align-items: center; padding: 8px 4px; border-radius: 9px; border: 1.5px solid var(--border); background: var(--white); cursor: default; font-family: inherit; transition: all 0.12s; gap: 4px; }
     .leave-day-btn .ld-name { font-size: 9px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.3px; }
     .leave-day-btn .ld-date { font-size: 15px; font-weight: 700; color: var(--text); }
     .leave-day-btn .ld-sub  { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1px; }
     .leave-day-btn.on-leave { background: var(--red-soft); border-color: var(--red-border); }
     .leave-day-btn.on-leave .ld-name, .leave-day-btn.on-leave .ld-date { color: var(--red); }
     .leave-day-btn.on-leave .ld-sub { color: var(--red); }
-    .leave-day-btn.future { opacity: 0.3; cursor: not-allowed; }
+    .leave-day-btn.future { opacity: 0.3; pointer-events: none; }
+    .sess-btns { display: flex; gap: 3px; width: 100%; }
+    .sess-btn { flex: 1; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 3px 2px; border-radius: 5px; border: 1.5px solid var(--border); background: var(--white); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.12s; text-align: center; }
+    .sess-btn.active { background: var(--red-soft); border-color: var(--red-border); color: var(--red); }
+    .sess-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
     .leave-rule-note { padding: 10px 12px; background: var(--blue-soft); border: 1px solid var(--blue-border); border-radius: 9px; font-size: 11px; color: var(--blue); line-height: 1.6; margin-bottom: 14px; }
     .leave-count-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg); border-radius: 9px; margin-bottom: 14px; }
@@ -412,10 +416,10 @@
   <div class="leave-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">🏖 Apply Leave</div>
-    <div class="modal-sub" id="leaveModalSub">Tap days to toggle leave. Minimum 3 days required per week for dues adjustment.</div>
+    <div class="modal-sub" id="leaveModalSub">Tap morning / evening per day to mark sessions absent. Minimum 3 sessions required for dues adjustment.</div>
 
     <div class="leave-rule-note">
-      💡 <strong>Rule:</strong> Leave is only applied if you mark <strong>3 or more working days</strong> in a week. Fewer than 3 days are not counted and dues remain unchanged.
+      💡 <strong>Rule:</strong> Leave is only applied if you mark <strong>3 or more sessions</strong> (morning or evening) in a week. Fewer than 3 sessions are not counted and dues remain unchanged.
     </div>
 
     <div class="leave-week-hd">
@@ -429,8 +433,8 @@
     <div class="leave-days-grid" id="leaveDaysGrid"></div>
 
     <div class="leave-count-bar">
-      <span class="leave-count-label">Days selected this week</span>
-      <span class="leave-count-val" id="leaveCountVal">0 / 5</span>
+      <span class="leave-count-label">Sessions selected this week</span>
+      <span class="leave-count-val" id="leaveCountVal">0 / 10</span>
     </div>
 
     <button class="leave-apply-btn" id="leaveApplyBtn" disabled>Apply Leave</button>
@@ -769,9 +773,8 @@
   function weekIsOver(monday){const fri=new Date(monday);fri.setDate(fri.getDate()+4);fri.setHours(0,0,0,0);return istNow()>fri;}
 
   // ── Leave helpers ─────────────────────────────────────
-  // Stored in data[dateStr].leave[riderKey] = true  (absence flag for leave)
-  // We also toggle morning/evening off for that rider on that day.
-  // The rule: only save if week has ≥3 leave days. Otherwise do nothing.
+  // Stored in data[dateStr].leave[riderKey] = { morning: true/false, evening: true/false }
+  // The rule: only save if week has ≥3 absent sessions. Otherwise do nothing.
 
   function getRiderLeaveDaysInWeek(riderKey, monday) {
     let count = 0;
@@ -782,27 +785,56 @@
     return count;
   }
 
-  // Returns Set of dateStr strings where rider has leave this week
+  // Count total leave sessions (morning + evening) for a rider in a week
+  function getRiderLeaveSessionsInWeek(riderKey, monday, rider) {
+    let count = 0;
+    getWeekDays(monday).forEach(d => {
+      const ds = toDateStr(d);
+      const lv = data[ds] && data[ds].leave && data[ds].leave[riderKey];
+      if (!lv) return;
+      if (rider.sessions.includes('morning') && lv.morning) count++;
+      if (rider.sessions.includes('evening') && lv.evening) count++;
+    });
+    return count;
+  }
+
+  // Returns Set of dateStr strings where rider has any leave session this week
   function getRiderLeaveSetForWeek(riderKey, monday) {
     const s = new Set();
     getWeekDays(monday).forEach(d => {
       const ds = toDateStr(d);
-      if (data[ds] && data[ds].leave && data[ds].leave[riderKey]) s.add(ds);
+      const lv = data[ds] && data[ds].leave && data[ds].leave[riderKey];
+      if (lv && (lv.morning || lv.evening)) s.add(ds);
     });
     return s;
   }
 
+  // Returns map of dateStr -> { morning, evening } for pending leave
+  function getRiderLeaveSessionMapForWeek(riderKey, monday, rider) {
+    const map = {};
+    getWeekDays(monday).forEach(d => {
+      const ds = toDateStr(d);
+      const lv = data[ds] && data[ds].leave && data[ds].leave[riderKey];
+      map[ds] = {
+        morning: rider.sessions.includes('morning') ? !!(lv && lv.morning) : false,
+        evening: rider.sessions.includes('evening') ? !!(lv && lv.evening) : false,
+      };
+    });
+    return map;
+  }
+
   // Apply / remove leave for a rider on specific dates — only their enrolled sessions
-  function applyLeaveToData(riderKey, leaveDates, rider) {
-    leaveDates.forEach(ds => {
+  function applyLeaveToData(riderKey, leaveMap, rider) {
+    // leaveMap: { dateStr: { morning: bool, evening: bool } }
+    Object.entries(leaveMap).forEach(([ds, sessions]) => {
       if (!data[ds]) data[ds] = {morning:{}, evening:{}};
       if (!data[ds].morning) data[ds].morning = {};
       if (!data[ds].evening) data[ds].evening = {};
       if (!data[ds].leave) data[ds].leave = {};
-      data[ds].leave[riderKey] = true;
-      // Only mark absent for sessions the rider is enrolled in
-      if (rider.sessions.includes('morning')) data[ds].morning[riderKey] = false;
-      if (rider.sessions.includes('evening')) data[ds].evening[riderKey] = false;
+      data[ds].leave[riderKey] = { morning: !!sessions.morning, evening: !!sessions.evening };
+      // Mark sessions absent/present based on leave
+      if (rider.sessions.includes('morning')) data[ds].morning[riderKey] = !sessions.morning;
+      if (rider.sessions.includes('evening')) data[ds].evening[riderKey] = !sessions.evening;
     });
   }
 
@@ -810,19 +842,20 @@
     leaveDates.forEach(ds => {
       if (!data[ds]) return;
       if (data[ds].leave) delete data[ds].leave[riderKey];
-      // Restore presence only for their enrolled sessions
+      // Restore presence for their enrolled sessions
       if (rider.sessions.includes('morning') && data[ds].morning) data[ds].morning[riderKey] = true;
       if (rider.sessions.includes('evening') && data[ds].evening) data[ds].evening[riderKey] = true;
     });
   }
 
   // ── Leave modal state ─────────────────────────────────
-  let leaveCtx = { rider: null, monday: null, pendingLeave: new Set() };
+  // pendingLeave: { dateStr: { morning: bool, evening: bool } }
+  let leaveCtx = { rider: null, monday: null, pendingLeave: {} };
 
   function openLeaveModal(rider) {
     leaveCtx.rider = rider;
     leaveCtx.monday = getMonday(realToday);
-    leaveCtx.pendingLeave = new Set(getRiderLeaveSetForWeek(rider.key, leaveCtx.monday));
+    leaveCtx.pendingLeave = getRiderLeaveSessionMapForWeek(rider.key, leaveCtx.monday, rider);
     renderLeaveModal();
     document.getElementById('leaveOverlay').classList.add('open');
   }
@@ -862,52 +895,87 @@
     grid.innerHTML = '';
     days.forEach((d, i) => {
       const ds = toDateStr(d);
-      // For future weeks, all days are selectable; for current/past, past days only
       const isFutureDay = !isFutureWeek && d > realToday;
-      const onLeave = pendingLeave.has(ds);
-      const btn = document.createElement('button');
-      btn.className = `leave-day-btn${onLeave ? ' on-leave' : ''}${isFutureDay ? ' future' : ''}`;
-      btn.disabled = isFutureDay;
-      btn.innerHTML = `<span class="ld-name">${DAY_NAMES[i]}</span><span class="ld-date">${d.getDate()}</span><span class="ld-sub">${onLeave ? 'Leave' : '—'}</span>`;
-      if (!isFutureDay) {
-        btn.addEventListener('click', () => {
-          if (pendingLeave.has(ds)) pendingLeave.delete(ds);
-          else pendingLeave.add(ds);
+      const sess = pendingLeave[ds] || { morning: false, evening: false };
+      const anyLeave = sess.morning || sess.evening;
+
+      const card = document.createElement('div');
+      card.className = `leave-day-btn${anyLeave ? ' on-leave' : ''}${isFutureDay ? ' future' : ''}`;
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'ld-name'; nameEl.textContent = DAY_NAMES[i];
+      const dateEl = document.createElement('span');
+      dateEl.className = 'ld-date'; dateEl.textContent = d.getDate();
+
+      const sessRow = document.createElement('div');
+      sessRow.className = 'sess-btns';
+
+      if (rider.sessions.includes('morning')) {
+        const mb = document.createElement('button');
+        mb.className = `sess-btn${sess.morning ? ' active' : ''}`;
+        mb.textContent = '\u{1F305}';
+        mb.disabled = isFutureDay;
+        mb.title = 'Morning';
+        mb.addEventListener('click', () => {
+          pendingLeave[ds] = { ...pendingLeave[ds], morning: !pendingLeave[ds].morning };
           renderLeaveModal();
         });
+        sessRow.appendChild(mb);
       }
-      grid.appendChild(btn);
+      if (rider.sessions.includes('evening')) {
+        const eb = document.createElement('button');
+        eb.className = `sess-btn${sess.evening ? ' active' : ''}`;
+        eb.textContent = '\u{1F306}';
+        eb.disabled = isFutureDay;
+        eb.title = 'Evening';
+        eb.addEventListener('click', () => {
+          pendingLeave[ds] = { ...pendingLeave[ds], evening: !pendingLeave[ds].evening };
+          renderLeaveModal();
+        });
+        sessRow.appendChild(eb);
+      }
+
+      card.appendChild(nameEl);
+      card.appendChild(dateEl);
+      card.appendChild(sessRow);
+      grid.appendChild(card);
     });
 
-    const count = pendingLeave.size;
+    let count = 0;
+    const maxSessions = rider.sessions.length * 5;
+    Object.values(pendingLeave).forEach(s => {
+      if (s.morning) count++;
+      if (s.evening) count++;
+    });
+
     const countEl = document.getElementById('leaveCountVal');
-    countEl.textContent = `${count} / 5`;
+    countEl.textContent = `${count} / ${maxSessions}`;
     const valid = count >= 3;
     countEl.className = 'leave-count-val ' + (count === 0 ? 'err' : count < 3 ? 'warn' : 'ok');
 
     const applyBtn = document.getElementById('leaveApplyBtn');
     applyBtn.disabled = count === 0;
     if (count === 0) applyBtn.textContent = 'Apply Leave';
-    else if (!valid) applyBtn.textContent = `Select ${3 - count} more day(s) to apply`;
-    else applyBtn.textContent = `Apply ${count}-day Leave`;
+    else if (!valid) applyBtn.textContent = `Select ${3 - count} more session(s) to apply`;
+    else applyBtn.textContent = `Apply Leave (${count} session${count > 1 ? 's' : ''})`;
     applyBtn.style.background = valid ? 'var(--red)' : 'var(--text3)';
 
-    // Show cancel-leave button only if there's existing approved leave this week
     const existingLeave = getRiderLeaveSetForWeek(rider.key, monday);
     const cancelBtn = document.getElementById('leaveCancelLeaveBtn');
-    cancelBtn.style.display = existingLeave.size >= 3 ? '' : 'none';
+    cancelBtn.style.display = existingLeave.size > 0 ? '' : 'none';
   }
+
 
   document.getElementById('leaveWeekPrev').addEventListener('click', () => {
     const prev = new Date(leaveCtx.monday); prev.setDate(prev.getDate() - 7);
     leaveCtx.monday = prev;
-    leaveCtx.pendingLeave = new Set(getRiderLeaveSetForWeek(leaveCtx.rider.key, prev));
+    leaveCtx.pendingLeave = getRiderLeaveSessionMapForWeek(leaveCtx.rider.key, prev, leaveCtx.rider);
     renderLeaveModal();
   });
   document.getElementById('leaveWeekNext').addEventListener('click', () => {
     const next = new Date(leaveCtx.monday); next.setDate(next.getDate() + 7);
     leaveCtx.monday = next;
-    leaveCtx.pendingLeave = new Set(getRiderLeaveSetForWeek(leaveCtx.rider.key, next));
+    leaveCtx.pendingLeave = getRiderLeaveSessionMapForWeek(leaveCtx.rider.key, next, leaveCtx.rider);
     renderLeaveModal();
   });
 
@@ -915,7 +983,7 @@
     const { rider, monday } = leaveCtx;
     const allDays = getWeekDays(monday).map(toDateStr);
     clearLeaveFromData(rider.key, allDays, rider);
-    leaveCtx.pendingLeave = new Set();
+    leaveCtx.pendingLeave = getRiderLeaveSessionMapForWeek(rider.key, monday, rider);
     saveData();
     renderAll();
     renderLeaveModal();
@@ -924,24 +992,24 @@
 
   document.getElementById('leaveApplyBtn').addEventListener('click', () => {
     const { rider, monday, pendingLeave } = leaveCtx;
-    const count = pendingLeave.size;
+    // Count total sessions selected
+    let count = 0;
+    Object.values(pendingLeave).forEach(s => { if (s.morning) count++; if (s.evening) count++; });
     if (count < 3) {
-      showToast(`⚠ Need at least 3 days — ${count} selected, not saved`);
+      showToast(`⚠ Need at least 3 sessions — ${count} selected, not saved`);
       return;
     }
-    // Clear all leave for this week first, then apply selected days
+    // Clear all leave for this week first, then apply selected sessions
     const allDays = getWeekDays(monday).map(toDateStr);
     clearLeaveFromData(rider.key, allDays, rider);
-    applyLeaveToData(rider.key, [...pendingLeave], rider);
+    applyLeaveToData(rider.key, pendingLeave, rider);
     saveData();
-    // If week was already settled, dues recalculate automatically from data.
-    // Settlement flag is kept — week remains "paid" at updated amount.
     renderAll();
     closeLeaveModal();
     const wk = getWeekRange(monday);
     const sk = `${rider.name}_${wk.key}`;
     const alreadySettled = !!settlements[sk];
-    showToast(`🏖 ${count}-day leave saved — dues adjusted${alreadySettled ? ' (settled week recalculated)' : ''}`);
+    showToast(`🏖 ${count}-session leave saved — dues adjusted${alreadySettled ? ' (settled week recalculated)' : ''}`);
   });
 
   document.getElementById('leaveCancel').addEventListener('click', closeLeaveModal);
