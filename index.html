@@ -736,17 +736,34 @@
       return true;
     }).map(r => r.key));
 
-    // A rider is present in a session only if: active, captain drove, and not on leave for that session
+    const ds = toDateStr(date);
+    // Single source of truth for "is this rider on effective leave for this session this day?"
+    // A rider is on leave only if BOTH:
+    //   - they have a leave record for the session that day, AND
+    //   - their total leave sessions for the week meet their threshold.
+    // The stored data[ds][sess][riderKey] = false flag is treated as legacy/cache and NOT trusted alone.
+    const riderEffectiveLeave = {}; // riderKey -> {morning, evening}
+    cfg.riders.forEach(r => {
+      const monday = getMonday(date);
+      const sessCount = getRiderLeaveSessionsInWeek(r.key, monday, r);
+      const adjustDues = sessCount >= getLeaveThreshold(r);
+      const lv = data[ds] && data[ds].leave && data[ds].leave[r.key];
+      riderEffectiveLeave[r.key] = {
+        morning: !!(adjustDues && lv && lv.morning),
+        evening: !!(adjustDues && lv && lv.evening),
+      };
+    });
+
+    // A rider is present in a session only if: active, captain drove, and not on effective leave
     const mr = getMorningRiders().filter(k => {
       if (k === 'captain') return true;
       if (!activeKeys.has(k)) return false;
-      // Check per-day morning attendance flag (false = absent/leave)
-      return entry.morning && entry.morning[k] !== false;
+      return !riderEffectiveLeave[k].morning;
     });
     const er = getEveningRiders().filter(k => {
       if (k === 'captain') return true;
       if (!activeKeys.has(k)) return false;
-      return entry.evening && entry.evening[k] !== false;
+      return !riderEffectiveLeave[k].evening;
     });
 
     if (entry.morning && entry.morning.captain !== false && mr.length > 1) {
@@ -1101,10 +1118,19 @@
   // Captain's contribution = their own head share per session (cost / total_travellers including captain).
   // Passenger contribution  = their head share per session (same per-head amount).
   // Sum of all contributions for a day = morning cost (if morning ran) + evening cost (if evening ran).
+  // Uses the SAME effective-leave logic as calculateDayDue: a rider is absent only if their leave is
+  // recorded for that session AND their week's session count meets their threshold.
   // Returns array of { key, name, color, role, amount } sorted by amount desc.
   function getWeekContributions(monday){
     const totals={captain:0};
     cfg.riders.forEach(r=>{totals[r.key]=0;});
+
+    // Precompute effective leave for each rider for this week (so we don't recompute per day)
+    const riderWeekLeave={};
+    cfg.riders.forEach(r=>{
+      const sessCount=getRiderLeaveSessionsInWeek(r.key,monday,r);
+      riderWeekLeave[r.key]={adjustDues:sessCount>=getLeaveThreshold(r)};
+    });
 
     getWeekDays(monday).forEach(d=>{
       const ds=toDateStr(d);
@@ -1125,11 +1151,13 @@
         // Captain didn't drive → no trip → no contributions for this session
         if(!(entry[sess]&&entry[sess].captain!==false))return;
 
-        // Riders present this session: enrolled, active, and attendance flag is not false
+        // Riders present this session: enrolled, active, and not on effective leave (leave + threshold met)
         const presentRiders=cfg.riders.filter(r=>{
           if(!r.sessions.includes(sess))return false;
           if(!activeKeys.has(r.key))return false;
-          return entry[sess]&&entry[sess][r.key]!==false;
+          const lv=data[ds]&&data[ds].leave&&data[ds].leave[r.key];
+          const onEffectiveLeave=riderWeekLeave[r.key].adjustDues&&lv&&lv[sess];
+          return !onEffectiveLeave;
         });
 
         const totalTravellers=presentRiders.length+1; // +1 for captain
