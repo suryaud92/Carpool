@@ -417,10 +417,10 @@
   <div class="leave-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">🏖 Apply Leave</div>
-    <div class="modal-sub" id="leaveModalSub">Tap morning / evening per day to mark sessions absent. Dues adjust at 3+ sessions.</div>
+    <div class="modal-sub" id="leaveModalSub">Tap morning / evening per day to mark sessions absent.</div>
 
-    <div class="leave-rule-note">
-      💡 <strong>Rule:</strong> You can save leave for any number of sessions. Dues are only adjusted when you mark <strong>3 or more sessions</strong> absent in a week.
+    <div class="leave-rule-note" id="leaveRuleNote">
+      💡 <strong>Rule:</strong> You can save leave for any number of sessions. Dues are only adjusted when the minimum session threshold is reached for the week.
     </div>
 
     <div class="leave-week-hd">
@@ -775,7 +775,13 @@
 
   // ── Leave helpers ─────────────────────────────────────
   // Stored in data[dateStr].leave[riderKey] = { morning: true/false, evening: true/false }
-  // The rule: only save if week has ≥3 absent sessions. Otherwise do nothing.
+  // The rule: dues are adjusted only if the rider hits a minimum number of absent sessions in the week.
+  //   - Rider enrolled in both morning + evening → threshold is 5 sessions
+  //   - Rider enrolled in only one session       → threshold is 3 sessions
+  // Below the threshold, save the leave record but keep dues unchanged.
+  function getLeaveThreshold(rider) {
+    return rider && rider.sessions && rider.sessions.length >= 2 ? 5 : 3;
+  }
 
   function getRiderLeaveDaysInWeek(riderKey, monday) {
     let count = 0;
@@ -833,7 +839,8 @@
       if (rider.sessions.includes('morning') && s.morning) totalLeaveSessions++;
       if (rider.sessions.includes('evening') && s.evening) totalLeaveSessions++;
     });
-    const adjustDues = totalLeaveSessions >= 3;
+    const threshold = getLeaveThreshold(rider);
+    const adjustDues = totalLeaveSessions >= threshold;
 
     Object.entries(leaveMap).forEach(([ds, sessions]) => {
       if (!data[ds]) data[ds] = {morning:{}, evening:{}};
@@ -841,7 +848,7 @@
       if (!data[ds].evening) data[ds].evening = {};
       if (!data[ds].leave) data[ds].leave = {};
       data[ds].leave[riderKey] = { morning: !!sessions.morning, evening: !!sessions.evening };
-      // Only mark absent (affecting dues) when total leave sessions >= 3
+      // Only mark absent (affecting dues) when total leave sessions >= threshold
       // With fewer sessions, save the leave record but keep rider marked present
       if (rider.sessions.includes('morning')) data[ds].morning[riderKey] = adjustDues ? !sessions.morning : true;
       if (rider.sessions.includes('evening')) data[ds].evening[riderKey] = adjustDues ? !sessions.evening : true;
@@ -977,15 +984,23 @@
       if (s.evening) count++;
     });
 
+    const threshold = getLeaveThreshold(rider);
+
+    // Update the rule note to reflect this rider's actual threshold
+    const ruleNote = document.getElementById('leaveRuleNote');
+    if (ruleNote) {
+      ruleNote.innerHTML = `💡 <strong>Rule:</strong> You can save leave for any number of sessions. Dues are only adjusted when you mark <strong>${threshold} or more sessions</strong> absent in a week.`;
+    }
+
     const countEl = document.getElementById('leaveCountVal');
     countEl.textContent = `${count} / ${maxSessions}`;
-    const valid = count >= 3;
-    countEl.className = 'leave-count-val ' + (count === 0 ? 'err' : count < 3 ? 'warn' : 'ok');
+    const valid = count >= threshold;
+    countEl.className = 'leave-count-val ' + (count === 0 ? 'err' : count < threshold ? 'warn' : 'ok');
 
     const applyBtn = document.getElementById('leaveApplyBtn');
     applyBtn.disabled = count === 0;
     if (count === 0) applyBtn.textContent = 'Apply Leave';
-    else if (!valid) applyBtn.textContent = `Save Leave — no dues adjustment (${3 - count} more to adjust)`;
+    else if (!valid) applyBtn.textContent = `Save Leave — no dues adjustment (${threshold - count} more to adjust)`;
     else applyBtn.textContent = `Apply Leave (${count} session${count > 1 ? 's' : ''})`;
     applyBtn.style.background = count === 0 ? 'var(--text3)' : valid ? 'var(--red)' : 'var(--orange)';
 
@@ -1034,10 +1049,11 @@
     const wk = getWeekRange(monday);
     const sk = `${rider.name}_${wk.key}`;
     const alreadySettled = !!settlements[sk];
-    const duesAdjusted = count >= 3;
+    const threshold = getLeaveThreshold(rider);
+    const duesAdjusted = count >= threshold;
     showToast(duesAdjusted
       ? `🏖 ${count}-session leave saved — dues adjusted${alreadySettled ? ' (recalculated)' : ''}`
-      : `🏖 ${count}-session leave saved — dues unchanged (need ${3 - count} more to adjust)`);
+      : `🏖 ${count}-session leave saved — dues unchanged (need ${threshold - count} more to adjust)`);
   });
 
   document.getElementById('leaveCancel').addEventListener('click', closeLeaveModal);
@@ -1230,9 +1246,10 @@
         const sk=`${rider.name}_${wk.key}`;
         const sessLabel=rider.sessions.map(s=>s==='morning'?'🌅':'🌆').join(' ');
         const amtClass=isOngoing?'projected':isSettled?'settled':isOver&&amt>0?'pending':'';
-        // Show leave chip if rider had approved leave this week
+        // Show leave chip if rider had enough leave this week to adjust dues
         const leaveDays=getRiderLeaveDaysInWeek(rider.key,wk.monday);
-        const leaveChip=leaveDays>=3?`<span class="leave-chip">🏖 ${leaveDays}d leave</span>`:'';
+        const leaveSess=getRiderLeaveSessionsInWeek(rider.key,wk.monday,rider);
+        const leaveChip=leaveSess>=getLeaveThreshold(rider)?`<span class="leave-chip">🏖 ${leaveDays}d leave</span>`:'';
         const riderRow=document.createElement('div');riderRow.className='dues-rider-row';
         let actionsHtml='';
         if(!isOngoing&&isOver&&amt>0){
@@ -1320,7 +1337,7 @@
         const leaveHtml=leaveNotes.length
           ?`<div class="captain-leave-note"><span class="captain-leave-note-icon">🚗</span><span><strong>Captain on leave:</strong> ${leaveNotes.join('; ')}</span></div>`:'';
         const riderLeaveSessions=getRiderLeaveSessionsInWeek(rider.key,details.monday,rider);
-        const riderLeaveHtml=riderLeaveSessions>=3
+        const riderLeaveHtml=riderLeaveSessions>=getLeaveThreshold(rider)
           ?`<div style="display:flex;align-items:center;gap:6px;padding:0 12px 8px;font-size:11px;color:var(--red)">🏖 Your ${riderLeaveSessions}-session leave applied — dues adjusted</div>`:'';
         dueBlocksHtml+=`<div class="dash-week-block unpaid">
           <div class="dash-week-block-hd">
@@ -1381,7 +1398,7 @@
       </div>
       <div class="captain-days-grid">${riderGridHtml}</div>
       <div style="margin-top:8px;padding:8px 10px;background:var(--blue-soft);border:1px solid var(--blue-border);border-radius:8px;font-size:11px;color:var(--blue)">
-        💡 Tap a day to mark or edit your leave sessions. Minimum 3 sessions required for dues adjustment.
+        💡 Tap a day to mark or edit your leave sessions. Minimum ${getLeaveThreshold(rider)} sessions required for dues adjustment.
       </div>
     </div>`;
 
