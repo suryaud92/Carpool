@@ -1198,8 +1198,14 @@
           return !onEffectiveLeave;
         });
 
-        const totalTravellers=presentRiders.length+1; // +1 for captain
-        if(totalTravellers<2)return; // captain alone — nobody contributes (no shared trip cost)
+       const totalTravellers=presentRiders.length+1; // +1 for captain
+        if(totalTravellers<2){
+          // Captain drove alone this session — full session cost falls on captain.
+          // This only happens when all enrolled passengers have approved leave (threshold met).
+          // We still record it in captain's contribution so the weekly total always = fuel consumed.
+          totals.captain+=cost;
+          return;
+        }
 
         const headShare=cost/totalTravellers;
         // Each present rider contributes their head share
