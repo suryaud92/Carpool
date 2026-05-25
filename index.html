@@ -940,7 +940,9 @@
     const nextMonday = new Date(monday); nextMonday.setDate(nextMonday.getDate() + 7);
     const riderStart = rider.startDate ? parseDate(rider.startDate) : new Date(2000, 0, 1);
     const riderStartMonday = getMonday(riderStart);
-    document.getElementById('leaveWeekPrev').disabled = monday <= riderStartMonday;
+    // Only allow stepping back to a week whose Friday is on/after the rider's start date
+    const prevFriday = new Date(prevMonday); prevFriday.setDate(prevFriday.getDate() + 4);
+    document.getElementById('leaveWeekPrev').disabled = prevFriday < riderStart;
     document.getElementById('leaveWeekNext').disabled = nextMonday > maxMonday;
 
     const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri'];
@@ -949,11 +951,12 @@
     days.forEach((d, i) => {
       const ds = toDateStr(d);
       const isFutureDay = !isFutureWeek && d > realToday;
+      const isBeforeStart = d < riderStart;
       const sess = pendingLeave[ds] || { morning: false, evening: false };
       const anyLeave = sess.morning || sess.evening;
 
       const card = document.createElement('div');
-      card.className = `leave-day-btn${anyLeave ? ' on-leave' : ''}${isFutureDay ? ' future' : ''}`;
+      card.className = `leave-day-btn${anyLeave ? ' on-leave' : ''}${(isFutureDay || isBeforeStart) ? ' future' : ''}`;
 
       const nameEl = document.createElement('span');
       nameEl.className = 'ld-name'; nameEl.textContent = DAY_NAMES[i];
@@ -972,9 +975,9 @@
         const capOff = captainMorningAbsent;
         mb.className = `sess-btn${sess.morning ? ' active' : ''}${capOff ? ' captain-off' : ''}`;
         mb.textContent = '\u{1F305}';
-        mb.disabled = isFutureDay || capOff;
-        mb.title = capOff ? 'No trip — captain absent' : 'Morning';
-        if (!capOff) {
+        mb.disabled = isFutureDay || isBeforeStart || capOff;
+        mb.title = isBeforeStart ? 'Before your carpool start date' : (capOff ? 'No trip — captain absent' : 'Morning');
+        if (!capOff && !isBeforeStart) {
           mb.addEventListener('click', () => {
             pendingLeave[ds] = { ...pendingLeave[ds], morning: !pendingLeave[ds].morning };
             renderLeaveModal();
@@ -987,9 +990,9 @@
         const capOff = captainEveningAbsent;
         eb.className = `sess-btn${sess.evening ? ' active' : ''}${capOff ? ' captain-off' : ''}`;
         eb.textContent = '\u{1F306}';
-        eb.disabled = isFutureDay || capOff;
-        eb.title = capOff ? 'No trip — captain absent' : 'Evening';
-        if (!capOff) {
+        eb.disabled = isFutureDay || isBeforeStart || capOff;
+        eb.title = isBeforeStart ? 'Before your carpool start date' : (capOff ? 'No trip — captain absent' : 'Evening');
+        if (!capOff && !isBeforeStart) {
           eb.addEventListener('click', () => {
             pendingLeave[ds] = { ...pendingLeave[ds], evening: !pendingLeave[ds].evening };
             renderLeaveModal();
@@ -1520,7 +1523,10 @@
     const stripNextMonday = new Date(stripMonday); stripNextMonday.setDate(stripNextMonday.getDate() + 7);
     const riderStartDate = rider.startDate ? parseDate(rider.startDate) : new Date(2000, 0, 1);
     const riderStartMonday = getMonday(riderStartDate);
-    const canGoStripPrev = stripPrevMonday >= riderStartMonday;
+    // Earliest reachable week: the one whose Friday is on/after the rider's start date.
+    // (If startDate is Sat/Sun, the first real week is the following Monday.)
+    const stripPrevFriday = new Date(stripPrevMonday); stripPrevFriday.setDate(stripPrevFriday.getDate() + 4);
+    const canGoStripPrev = stripPrevFriday >= riderStartDate;
     // Going forward on the dashboard strip stops at the current week — for future planning, the modal itself has nav
     const canGoStripNext = stripNextMonday <= currentWeekMonday;
     const stripWeekLabel = isStripCurrentWeek
@@ -1532,6 +1538,7 @@
     stripDays.forEach((d, i) => {
       const ds = toDateStr(d);
       const isFuture = d > realToday;
+      const isBeforeStart = d < riderStartDate;
       const lv = data[ds] && data[ds].leave && data[ds].leave[rider.key];
       const mLeave = rider.sessions.includes('morning') && lv && lv.morning;
       const eLeave = rider.sessions.includes('evening') && lv && lv.evening;
@@ -1539,9 +1546,9 @@
       const captainEveOff  = data[ds] && data[ds].evening && data[ds].evening.captain === false;
       const both = mLeave && eLeave;
       const either = mLeave || eLeave;
-      const cls = isFuture ? 'is-future' : both ? 'absent' : either ? 'absent-partial' : 'present';
-      const sub = both ? 'M+E leave' : mLeave ? 'Morn off' : eLeave ? 'Eve off' : (captainMornOff && captainEveOff) ? 'No trip' : 'Present';
-      riderGridHtml += `<button class="captain-day-btn ${cls}" data-date="${ds}" ${isFuture ? 'disabled' : ''}>
+      const cls = (isFuture || isBeforeStart) ? 'is-future' : both ? 'absent' : either ? 'absent-partial' : 'present';
+      const sub = isBeforeStart ? 'Pre-start' : (both ? 'M+E leave' : mLeave ? 'Morn off' : eLeave ? 'Eve off' : (captainMornOff && captainEveOff) ? 'No trip' : 'Present');
+      riderGridHtml += `<button class="captain-day-btn ${cls}" data-date="${ds}" ${(isFuture || isBeforeStart) ? 'disabled' : ''}>
         <span class="cd-name">${DAY_NAMES_STRIP[i]}</span><span class="cd-date">${d.getDate()}</span><span class="cd-sub">${sub}</span>
       </button>`;
     });
