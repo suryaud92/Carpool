@@ -1087,6 +1087,28 @@
     return grouped;
   }
 
+  // Per-week contribution breakdown — what each person (captain included) put toward the week's cost.
+  // For passengers: their share of each session they rode (calculateDayDue already gives this).
+  // For the captain: cost − captain's own head share for each session he drove (also from calculateDayDue).
+  // Returns array of { key, name, color, role, amount } sorted by amount desc.
+  function getWeekContributions(monday){
+    const totals={captain:0};
+    cfg.riders.forEach(r=>{totals[r.key]=0;});
+    getWeekDays(monday).forEach(d=>{
+      const ds=toDateStr(d);
+      const entry=data[ds]||{morning:{captain:true},evening:{captain:true}};
+      const dues=calculateDayDue(entry,d);
+      Object.entries(dues).forEach(([k,v])=>{if(totals[k]!==undefined)totals[k]+=(v||0);});
+    });
+    const out=[];
+    if(totals.captain>0)out.push({key:'captain',name:'Surya (Captain)',color:'#1a1917',role:'captain',amount:totals.captain});
+    cfg.riders.forEach(r=>{
+      if(totals[r.key]>0)out.push({key:r.key,name:r.name,color:r.color,role:'rider',amount:totals[r.key]});
+    });
+    out.sort((a,b)=>b.amount-a.amount);
+    return out;
+  }
+
   function getAllWeekKeys(){
     const now=istNow();
     const earliestStart=cfg.riders.reduce((min,r)=>{const sd=r.startDate?parseDate(r.startDate):now;return sd<min?sd:min;},now);
@@ -1100,7 +1122,9 @@
 
   // ── Admin captain week selector ───────────────────────
   let _adminDisplayMonday=null;
+  let _riderLeaveStripMonday=null;
   function getAdminDisplayMonday(){if(!_adminDisplayMonday)_adminDisplayMonday=getMonday(realToday);return _adminDisplayMonday;}
+  function getRiderLeaveStripMonday(){if(!_riderLeaveStripMonday)_riderLeaveStripMonday=getMonday(realToday);return _riderLeaveStripMonday;}
 
   function renderCaptainGridForWeek(monday){
     const container=document.getElementById('captainAttendanceCard');
@@ -1270,6 +1294,29 @@
           body.prepend(noteEl);
         }
       }
+      // ── Contributions breakdown ──
+      const contribs=getWeekContributions(wk.monday);
+      if(contribs.length){
+        const weekFuelCost=contribs.reduce((s,c)=>s+c.amount,0);
+        const contribWrap=document.createElement('div');
+        contribWrap.style.cssText='margin:8px 14px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);overflow:hidden';
+        const contribHd=document.createElement('div');
+        contribHd.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px';
+        contribHd.innerHTML=`<span>💰 Contributions${isOngoing?' (projected)':''} · Total ₹${Math.round(weekFuelCost)}</span><span style="font-size:10px;color:var(--text3)">▼</span>`;
+        const contribBody=document.createElement('div');
+        contribBody.style.cssText='background:var(--white);display:none';
+        contribs.forEach(c=>{
+          const row=document.createElement('div');
+          row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-top:1px solid var(--border)';
+          const pct=weekFuelCost>0?Math.round((c.amount/weekFuelCost)*100):0;
+          const roleTag=c.role==='captain'?'<span style="font-size:9px;font-weight:700;background:var(--purple-soft);color:var(--purple);border:1px solid var(--purple-border);border-radius:20px;padding:1px 6px;margin-left:5px">CAPTAIN</span>':'';
+          row.innerHTML=`<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1"><div style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0"></div><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}${roleTag}</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><span style="font-size:10px;color:var(--text3);font-weight:600">${pct}%</span><span style="font-size:13px;font-weight:700;color:var(--text)">₹${Math.round(c.amount)}</span></div>`;
+          contribBody.appendChild(row);
+        });
+        contribHd.addEventListener('click',()=>{const open=contribBody.style.display==='none';contribBody.style.display=open?'':'none';contribHd.querySelector('span:last-child').style.transform=open?'rotate(180deg)':'rotate(0deg)';});
+        contribWrap.appendChild(contribHd);contribWrap.appendChild(contribBody);
+        body.appendChild(contribWrap);
+      }
       block.appendChild(hd);block.appendChild(body);container.appendChild(block);
     });
     if(!weekList.length)container.innerHTML='<div style="font-size:13px;color:var(--text3);padding:6px 0">No weeks to show yet.</div>';
@@ -1326,6 +1373,21 @@
     const DAY_NAMES=['Mon','Tue','Wed','Thu','Fri'];
     const currentLeaveDays=getRiderLeaveDaysInWeek(rider.key,monday);
 
+    // Build a compact contributions strip for a given week monday
+    function buildContribStripHtml(weekMonday){
+      const contribs=getWeekContributions(weekMonday);
+      if(!contribs.length)return'';
+      const total=contribs.reduce((s,c)=>s+c.amount,0);
+      const rowsHtml=contribs.map(c=>{
+        const isMe=c.key===rider.key;
+        const pct=total>0?Math.round((c.amount/total)*100):0;
+        const roleTag=c.role==='captain'?'<span style="font-size:8px;font-weight:700;background:var(--purple-soft);color:var(--purple);border:1px solid var(--purple-border);border-radius:20px;padding:1px 5px;margin-left:4px">CAPTAIN</span>':'';
+        const meTag=isMe?'<span style="font-size:8px;font-weight:700;background:var(--blue-soft);color:var(--blue);border:1px solid var(--blue-border);border-radius:20px;padding:1px 5px;margin-left:4px">YOU</span>':'';
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:11px"><div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1"><div style="width:7px;height:7px;border-radius:50%;background:${c.color};flex-shrink:0"></div><span style="font-weight:${isMe?'700':'600'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}${roleTag}${meTag}</span></div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:var(--text3);font-weight:600">${pct}%</span><span style="font-weight:700">₹${Math.round(c.amount)}</span></div></div>`;
+      }).join('');
+      return `<details style="margin:0 12px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg)"><summary style="padding:7px 10px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;cursor:pointer;list-style:none">💰 Week Contributions · Total ₹${Math.round(total)}</summary><div style="padding:4px 10px 8px;background:var(--white);border-top:1px solid var(--border)">${rowsHtml}</div></details>`;
+    }
+
     // Due blocks
     let dueBlocksHtml='';
     if(!unsettled.length){
@@ -1339,6 +1401,7 @@
         const riderLeaveSessions=getRiderLeaveSessionsInWeek(rider.key,details.monday,rider);
         const riderLeaveHtml=riderLeaveSessions>=getLeaveThreshold(rider)
           ?`<div style="display:flex;align-items:center;gap:6px;padding:0 12px 8px;font-size:11px;color:var(--red)">🏖 Your ${riderLeaveSessions}-session leave applied — dues adjusted</div>`:'';
+        const contribHtml=buildContribStripHtml(details.monday);
         dueBlocksHtml+=`<div class="dash-week-block unpaid">
           <div class="dash-week-block-hd">
             <div>
@@ -1349,6 +1412,7 @@
           </div>
           ${riderLeaveHtml}
           ${leaveHtml?`<div style="padding:0 12px 10px">${leaveHtml}</div>`:''}
+          ${contribHtml}
         </div>`;
       });
       dueBlocksHtml+=`<div class="dash-total-row">
@@ -1362,15 +1426,29 @@
     let histHtml=settledList.length
       ? settledList.map(([wk,d])=>{
           const sk=`${rider.name}_${wk}`;
-          return `<div class="dash-week-block paid"><div class="dash-week-block-hd"><div><div class="dash-week-label">${d.label}</div><div class="dash-week-amt green">₹${Math.round(d.amount)}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="dash-badge paid">✓ Paid</span><button class="action-btn btn-revert" style="font-size:11px;padding:4px 9px" data-revert="${sk}">Revert</button></div></div></div>`;
+          return `<div class="dash-week-block paid"><div class="dash-week-block-hd"><div><div class="dash-week-label">${d.label}</div><div class="dash-week-amt green">₹${Math.round(d.amount)}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="dash-badge paid">✓ Paid</span><button class="action-btn btn-revert" style="font-size:11px;padding:4px 9px" data-revert="${sk}">Revert</button></div></div>${buildContribStripHtml(d.monday)}</div>`;
         }).join('')
       : `<div style="padding:12px 0;font-size:13px;color:var(--text2);text-align:center">No payment history yet</div>`;
 
-    // Build rider leave day strip (like captain grid)
-    const riderDisplayDays = getWeekDays(monday);
+    // Build rider leave day strip — now supports navigating to previous weeks
+    const stripMonday = getRiderLeaveStripMonday();
+    const stripDays = getWeekDays(stripMonday);
+    const currentWeekMonday = getMonday(realToday);
+    const isStripCurrentWeek = toDateStr(stripMonday) === toDateStr(currentWeekMonday);
+    const stripPrevMonday = new Date(stripMonday); stripPrevMonday.setDate(stripPrevMonday.getDate() - 7);
+    const stripNextMonday = new Date(stripMonday); stripNextMonday.setDate(stripNextMonday.getDate() + 7);
+    const riderStartDate = rider.startDate ? parseDate(rider.startDate) : new Date(2000, 0, 1);
+    const riderStartMonday = getMonday(riderStartDate);
+    const canGoStripPrev = stripPrevMonday >= riderStartMonday;
+    // Going forward on the dashboard strip stops at the current week — for future planning, the modal itself has nav
+    const canGoStripNext = stripNextMonday <= currentWeekMonday;
+    const stripWeekLabel = isStripCurrentWeek
+      ? 'This Week'
+      : `${fmtDateShort(stripDays[0])} – ${fmtDateShort(stripDays[4])}`;
+
     const DAY_NAMES_STRIP = ['Mon','Tue','Wed','Thu','Fri'];
     let riderGridHtml = '';
-    riderDisplayDays.forEach((d, i) => {
+    stripDays.forEach((d, i) => {
       const ds = toDateStr(d);
       const isFuture = d > realToday;
       const lv = data[ds] && data[ds].leave && data[ds].leave[rider.key];
@@ -1381,24 +1459,41 @@
       const both = mLeave && eLeave;
       const either = mLeave || eLeave;
       const cls = isFuture ? 'is-future' : both ? 'absent' : either ? 'absent-partial' : 'present';
-      const bothSessions = rider.sessions.includes('morning') && rider.sessions.includes('evening');
       const sub = both ? 'M+E leave' : mLeave ? 'Morn off' : eLeave ? 'Eve off' : (captainMornOff && captainEveOff) ? 'No trip' : 'Present';
       riderGridHtml += `<button class="captain-day-btn ${cls}" data-date="${ds}" ${isFuture ? 'disabled' : ''}>
         <span class="cd-name">${DAY_NAMES_STRIP[i]}</span><span class="cd-date">${d.getDate()}</span><span class="cd-sub">${sub}</span>
       </button>`;
     });
+
+    // Show leave summary for the displayed week (not just current week)
+    const stripLeaveSessions = getRiderLeaveSessionsInWeek(rider.key, stripMonday, rider);
+    const stripThreshold = getLeaveThreshold(rider);
+    const stripLeaveSummary = stripLeaveSessions > 0
+      ? (stripLeaveSessions >= stripThreshold
+          ? `<div style="margin-top:8px;padding:7px 10px;background:var(--red-soft);border:1px solid var(--red-border);border-radius:8px;font-size:11px;color:var(--red);font-weight:600">🏖 ${stripLeaveSessions}-session leave applied — dues adjusted for this week</div>`
+          : `<div style="margin-top:8px;padding:7px 10px;background:var(--orange-soft);border:1px solid var(--orange-border);border-radius:8px;font-size:11px;color:var(--orange);font-weight:600">🏖 ${stripLeaveSessions} session(s) marked — need ${stripThreshold - stripLeaveSessions} more for dues adjustment</div>`)
+      : '';
+
     const leaveStatusHtml = `<div id="riderLeaveGrid" style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:13px;font-weight:700">🏖 This Week Leave</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:13px;font-weight:700">🏖 Leave</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <button id="riderStripPrev" style="background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:3px 8px;font-size:13px;cursor:pointer;color:var(--text2);${canGoStripPrev?'':'opacity:0.3;cursor:not-allowed;'}" ${canGoStripPrev?'':'disabled'}>‹</button>
+            <span style="font-size:11px;font-weight:600;color:var(--text2);min-width:78px;text-align:center">${stripWeekLabel}</span>
+            <button id="riderStripNext" style="background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:3px 8px;font-size:13px;cursor:pointer;color:var(--text2);${canGoStripNext?'':'opacity:0.3;cursor:not-allowed;'}" ${canGoStripNext?'':'disabled'}>›</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:#2e7d32;display:inline-block"></span>Present</span>
           <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:var(--orange);display:inline-block"></span>Partial</span>
           <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:#9e9e9e;display:inline-block"></span>Full leave</span>
         </div>
       </div>
       <div class="captain-days-grid">${riderGridHtml}</div>
+      ${stripLeaveSummary}
       <div style="margin-top:8px;padding:8px 10px;background:var(--blue-soft);border:1px solid var(--blue-border);border-radius:8px;font-size:11px;color:var(--blue)">
-        💡 Tap a day to mark or edit your leave sessions. Minimum ${getLeaveThreshold(rider)} sessions required for dues adjustment.
+        💡 Tap a day to mark or edit your leave. ${isStripCurrentWeek?'You can also navigate to previous weeks.':'Editing a past week will recalculate dues.'} Minimum ${getLeaveThreshold(rider)} sessions required for dues adjustment.
       </div>
     </div>`;
 
@@ -1438,6 +1533,16 @@
         const d = parseDate(btn.dataset.date);
         openLeaveModalForDay(rider, d);
       });
+    });
+    document.getElementById('riderStripPrev')?.addEventListener('click', () => {
+      if (!canGoStripPrev) return;
+      _riderLeaveStripMonday = stripPrevMonday;
+      renderPersonalDashboard();
+    });
+    document.getElementById('riderStripNext')?.addEventListener('click', () => {
+      if (!canGoStripNext) return;
+      _riderLeaveStripMonday = stripNextMonday;
+      renderPersonalDashboard();
     });
     document.getElementById('makePaymentBtn')?.addEventListener('click',()=>openPaymentSelector(rider,unsettled));
 
