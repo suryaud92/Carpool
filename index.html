@@ -642,7 +642,7 @@
   onValue(dataRef,snap=>{data=snap.val()||{};dataLoaded=true;checkReady();if(fbReady){renderPersonalDashboard();renderAdminDues();}});
   onValue(settlementsRef,snap=>{settlements=snap.val()||{};settlementsLoaded=true;checkReady();if(fbReady){renderPersonalDashboard();renderAdminDues();}});
   onValue(adjustmentsRef,snap=>{adjustments=snap.val()||{};adjustmentsLoaded=true;checkReady();if(fbReady){renderPersonalDashboard();renderAdminDues();}});
-  function checkReady(){if(dataLoaded&&settlementsLoaded&&configLoaded&&adjustmentsLoaded&&!fbReady){fbReady=true;setSyncStatus('synced','Synced');renderAll();}}
+  function checkReady(){if(dataLoaded&&settlementsLoaded&&configLoaded&&!fbReady){fbReady=true;adjustmentsLoaded=true;setSyncStatus('synced','Synced');renderAll();}}
   onValue(ref(db,'.info/connected'),snap=>{if(!snap.val())setSyncStatus('error','Offline');else if(fbReady)setSyncStatus('synced','Synced');});
 
   let saveTimer=null;
