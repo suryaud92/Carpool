@@ -1202,104 +1202,148 @@
   document.getElementById('captainSessModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeCaptainSessModal();});
 
   // ── Admin Dues ────────────────────────────────────────
+  // Layout: one block per rider, expanded to show week-by-week dues rows.
   function renderAdminDues(){
     if(currentRole!=='admin')return;
     const container=document.getElementById('adminDuesContainer');container.innerHTML='';
     const grouped=buildGroupedWeeks();
-    const now=istNow();
-    const nextMon=getMonday(new Date(now.getTime()+7*24*60*60*1000));
-    const ongoingWk=getWeekRange(nextMon);
-    const ongoingAmt={};
-    cfg.riders.forEach(r=>{
-      let a=0;
-      getWeekDays(nextMon).forEach(d=>{
-        const ds=toDateStr(d),entry=data[ds]||{morning:{captain:true},evening:{captain:true}};
-        a+=(calculateDayDue(entry,d)[r.key]||0);
+
+    cfg.riders.forEach((rider,rIdx)=>{
+      const myWeeks=grouped[rider.name]||{};
+
+      // Collect all weeks that have an amount > 0, sorted newest first
+      const allPast=getAllWeekKeys().filter(wk=>weekIsOver(wk.monday));
+      const weekRows=allPast.filter(wk=>{
+        const d=myWeeks[wk.key];
+        return d&&d.amount>0;
       });
-      ongoingAmt[r.name]=a;
-    });
-    const allPast=getAllWeekKeys().filter(w=>w.key!==ongoingWk.key);
-    const recent4=allPast.slice(0,4);
-    const olderWithDues=allPast.slice(4).filter(wk=>cfg.riders.some(r=>{const d=grouped[r.name]&&grouped[r.name][wk.key];return d&&d.amount>0&&!isSettled(`${r.name}_${wk.key}`);}));
-    const weekList=[...recent4,...olderWithDues];
-    weekList.forEach((wk,wkIdx)=>{
-      const isOngoing=wk.key===ongoingWk.key,isOver=weekIsOver(wk.monday);
-      const allSettled=!isOngoing&&isOver&&cfg.riders.every(r=>{const d=grouped[r.name]&&grouped[r.name][wk.key];return!d||d.amount===0||isSettled(`${r.name}_${wk.key}`);});
-      const anyUnsettled=!isOngoing&&isOver&&cfg.riders.some(r=>{const d=grouped[r.name]&&grouped[r.name][wk.key];return d&&d.amount>0&&!isSettled(`${r.name}_${wk.key}`);});
-      let weekTotal=0;
-      cfg.riders.forEach(r=>{if(isOngoing){weekTotal+=ongoingAmt[r.name]||0;}else{const d=grouped[r.name]&&grouped[r.name][wk.key];if(d&&d.amount>0&&!isSettled(`${r.name}_${wk.key}`))weekTotal+=d.amount;}});
-      const tagHtml=isOngoing?`<span class="dues-week-tag tag-ongoing">Upcoming</span>`:!isOver?`<span class="dues-week-tag tag-ongoing">In progress</span>`:allSettled?`<span class="dues-week-tag tag-settled">All settled</span>`:anyUnsettled?`<span class="dues-week-tag tag-unsettled">Pending</span>`:'';
+
+      // Outstanding = sum of unsettled past weeks + pending adjustments
+      let outstanding=0;
+      weekRows.forEach(wk=>{
+        if(!isSettled(`${rider.name}_${wk.key}`)){outstanding+=(myWeeks[wk.key].amount||0);}
+      });
+      outstanding+=getRiderPendingAdjTotal(rider.name);
+
+      // Current in-progress week
+      const currentWk=getWeekRange(realToday);
+      const isOver=weekIsOver(currentWk.monday);
+      const inProgressWk=!isOver?currentWk:null;
+
       const block=document.createElement('div');block.className='dues-week-block';
+
+      // Header — rider name + outstanding total, always open for first rider
       const hd=document.createElement('div');hd.className='dues-week-hd';
-      hd.innerHTML=`<div class="dues-week-hd-left"><span class="dues-week-label">${wk.label}</span>${tagHtml}${anyUnsettled&&weekTotal>0?`<span style="font-size:12px;font-weight:700;color:var(--orange)">₹${Math.round(weekTotal)}</span>`:''}</div><span class="dues-week-chevron ${wkIdx===0?'open':''}">▼</span>`;
-      const body=document.createElement('div');body.className=`dues-week-body${wkIdx===0?'':' collapsed'}`;
-      cfg.riders.forEach(rider=>{
-        let amt=0,settled=false;
-        if(isOngoing){amt=ongoingAmt[rider.name]||0;}
-        else{const d=grouped[rider.name]&&grouped[rider.name][wk.key];amt=d?d.amount:0;settled=amt>0&&isSettled(`${rider.name}_${wk.key}`);}
-        const sk=`${rider.name}_${wk.key}`;
-        const sessLabel=rider.sessions.map(s=>s==='morning'?'🌅':'🌆').join(' ');
-        const isInProgress=!isOngoing&&!isOver;
-        const amtClass=isOngoing?'projected':settled?'settled':isOver&&amt>0?'pending':'';
-        const leaveDays=getRiderLeaveDaysInWeek(rider.key,wk.monday);
-        const leaveSess=getRiderLeaveSessionsInWeek(rider.key,wk.monday,rider);
-        const leaveChip=leaveSess>=getLeaveThreshold(rider)?`<span class="leave-chip">🏖 ${leaveDays}d leave</span>`:'';
-        // Adjustment badge on settled weeks
-        const wkAdjs=getAdjustmentsForWeek(rider.name,wk.key);
-        const adjBadge=settled&&wkAdjs.length?`<span style="font-size:9px;font-weight:700;background:var(--orange-soft);color:var(--orange);border:1px solid var(--orange-border);border-radius:20px;padding:1px 6px;margin-left:4px">⚠ adjusted</span>`:'';
-        const riderRow=document.createElement('div');riderRow.className='dues-rider-row';
-        let actionsHtml='';
-        if(!isOngoing&&isOver&&amt>0){
-          if(!settled)actionsHtml=`<button class="action-btn btn-pay" data-pay="${sk}" data-amt="${Math.round(amt)}">Mark Paid</button>`;
-          else actionsHtml=`<button class="action-btn btn-revert" data-revert="${sk}">Revert</button>`;
+      const outstandingTag=outstanding>0
+        ?`<span style="font-size:13px;font-weight:700;color:var(--orange)">₹${Math.round(outstanding)}</span>`
+        :`<span style="font-size:12px;font-weight:700;color:var(--green)">✓ Clear</span>`;
+      hd.innerHTML=`<div class="dues-week-hd-left">
+        <div style="width:10px;height:10px;border-radius:50%;background:${rider.color};flex-shrink:0"></div>
+        <span class="dues-week-label">${rider.name}</span>
+        <span style="font-size:10px;color:var(--text3)">${rider.sessions.map(s=>s==='morning'?'🌅':'🌆').join(' ')}</span>
+        ${outstandingTag}
+      </div><span class="dues-week-chevron ${rIdx===0?'open':''}">▼</span>`;
+
+      const body=document.createElement('div');body.className=`dues-week-body${rIdx===0?'':' collapsed'}`;
+
+      // In-progress current week row
+      if(inProgressWk){
+        let inProgAmt=0;
+        getWeekDays(inProgressWk.monday).forEach(d=>{
+          const ds=toDateStr(d),entry=data[ds]||{morning:{captain:true},evening:{captain:true}};
+          inProgAmt+=(calculateDayDue(entry,d)[rider.key]||0);
+        });
+        if(inProgAmt>0){
+          const row=document.createElement('div');row.className='dues-rider-row';
+          row.innerHTML=`<div class="dues-rider-left"><div style="width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0"></div><div><div class="dues-rider-name">${inProgressWk.label}</div><div class="dues-rider-sessions">In progress</div></div></div>
+            <div class="dues-rider-right"><span class="dues-rider-amt projected">₹${Math.round(inProgAmt)} <span style="font-size:10px;font-weight:500;color:var(--text3)">(so far)</span></span></div>`;
+          body.appendChild(row);
         }
-        const amtLabel=amt>0?(isInProgress?`₹${Math.round(amt)} <span style="font-size:10px;font-weight:500;color:var(--text3)">(so far)</span>`:`₹${Math.round(amt)}`):'—';
-        riderRow.innerHTML=`<div class="dues-rider-left"><div class="dues-rider-dot" style="background:${rider.color}"></div><div><div class="dues-rider-name">${rider.name} ${leaveChip}${adjBadge}</div><div class="dues-rider-sessions">${sessLabel}</div></div></div><div class="dues-rider-right"><span class="dues-rider-amt ${amtClass}">${amtLabel}</span>${actionsHtml}</div>`;
-        riderRow.querySelector('[data-pay]')?.addEventListener('click',e=>{
+      }
+
+      if(!weekRows.length&&!inProgressWk){
+        const empty=document.createElement('div');empty.style='padding:12px 14px;font-size:12px;color:var(--text3)';empty.textContent='No dues recorded yet.';body.appendChild(empty);
+      }
+
+      weekRows.forEach(wk=>{
+        const d=myWeeks[wk.key];
+        const sk=`${rider.name}_${wk.key}`;
+        const settled=isSettled(sk);
+        const amt=d.amount;
+        const amtClass=settled?'settled':'pending';
+        const leaveSess=getRiderLeaveSessionsInWeek(rider.key,wk.monday,rider);
+        const leaveDays=getRiderLeaveDaysInWeek(rider.key,wk.monday);
+        const leaveChip=leaveSess>=getLeaveThreshold(rider)?`<span class="leave-chip">🏖 ${leaveDays}d leave</span>`:'';
+        const wkAdjs=getAdjustmentsForWeek(rider.name,wk.key);
+        const adjBadge=settled&&wkAdjs.length?`<span style="font-size:9px;font-weight:700;background:var(--orange-soft);color:var(--orange);border:1px solid var(--orange-border);border-radius:20px;padding:1px 6px;margin-left:4px">⚠ adj</span>`:'';
+        // Captain leave note for this week
+        const leaveNotes=getCaptainLeaveNotes(wk.monday);
+        const captainChip=leaveNotes.length?`<span style="font-size:9px;font-weight:700;background:var(--yellow-soft);color:var(--yellow);border:1px solid var(--yellow-border);border-radius:20px;padding:1px 6px;margin-left:4px">🚗 cap. leave</span>`:'';
+        let actionsHtml='';
+        if(!settled)actionsHtml=`<button class="action-btn btn-pay" data-pay="${sk}" data-amt="${Math.round(amt)}">Mark Paid</button>`;
+        else actionsHtml=`<button class="action-btn btn-revert" data-revert="${sk}">Revert</button>`;
+
+        const row=document.createElement('div');row.className='dues-rider-row';
+        row.innerHTML=`<div class="dues-rider-left">
+          <div style="width:7px;height:7px;border-radius:50%;background:${settled?'var(--green)':'var(--orange)'};flex-shrink:0"></div>
+          <div>
+            <div class="dues-rider-name">${wk.label} ${leaveChip}${captainChip}${adjBadge}</div>
+            <div class="dues-rider-sessions">${settled?'✓ Paid':'Unpaid'}</div>
+          </div>
+        </div>
+        <div class="dues-rider-right">
+          <span class="dues-rider-amt ${amtClass}">₹${Math.round(amt)}</span>
+          ${actionsHtml}
+        </div>`;
+
+        row.querySelector('[data-pay]')?.addEventListener('click',e=>{
           const s=e.currentTarget.dataset.pay,a=parseFloat(e.currentTarget.dataset.amt);
           markSettled(s,a);saveSettlements();renderAdminDues();renderPersonalDashboard();showToast('✓ Marked as paid');
         });
-        riderRow.querySelector('[data-revert]')?.addEventListener('click',e=>{
+        row.querySelector('[data-revert]')?.addEventListener('click',e=>{
           markUnsettled(e.currentTarget.dataset.revert);saveSettlements();renderAdminDues();renderPersonalDashboard();renderHistory();showToast('↩ Payment reverted');
         });
-        // Show adjustment notes under settled rows
+
+        // Adjustment notes under settled rows
         if(settled&&wkAdjs.length){
           wkAdjs.forEach(a=>{
-            const adjRow=document.createElement('div');
-            adjRow.className=`adj-note ${a.direction}`;
+            const adjRow=document.createElement('div');adjRow.className=`adj-note ${a.direction}`;
             const sign=a.direction==='owe'?'+':'-';
-            adjRow.innerHTML=`<span>⚠</span><span>${a.reason} · ${sign}₹${Math.round(a.amount)} ${a.direction==='owe'?'owed':'credited'} — rolled to next due week</span>`;
+            adjRow.innerHTML=`<span>⚠</span><span>${a.reason} · ${sign}₹${Math.round(a.amount)} — rolled to next due week</span>`;
             body.appendChild(adjRow);
           });
         }
-        body.appendChild(riderRow);
+        body.appendChild(row);
       });
+
+      // Contributions panel at the bottom of each rider block (last settled or current week)
+      const latestWk=weekRows[0]||inProgressWk;
+      if(latestWk){
+        const contribs=getWeekContributions(latestWk.monday);
+        if(contribs.length){
+          const weekFuelCost=contribs.reduce((s,c)=>s+c.amount,0);
+          const contribWrap=document.createElement('div');contribWrap.style.cssText='margin:8px 14px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);overflow:hidden';
+          const contribHd=document.createElement('div');contribHd.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px';
+          contribHd.innerHTML=`<span>💰 Latest Week Contributions · Total ₹${Math.round(weekFuelCost)}</span><span style="font-size:10px;color:var(--text3)">▼</span>`;
+          const contribBody=document.createElement('div');contribBody.style.cssText='background:var(--white);display:none';
+          contribs.forEach(c=>{
+            const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-top:1px solid var(--border)';
+            const pct=weekFuelCost>0?Math.round((c.amount/weekFuelCost)*100):0;
+            const roleTag=c.role==='captain'?'<span style="font-size:9px;font-weight:700;background:var(--purple-soft);color:var(--purple);border:1px solid var(--purple-border);border-radius:20px;padding:1px 6px;margin-left:5px">CAPTAIN</span>':'';
+            const isMe=c.key===rider.key?'<span style="font-size:9px;font-weight:700;background:var(--blue-soft);color:var(--blue);border:1px solid var(--blue-border);border-radius:20px;padding:1px 6px;margin-left:5px">THIS RIDER</span>':'';
+            row.innerHTML=`<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1"><div style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0"></div><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}${roleTag}${isMe}</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><span style="font-size:10px;color:var(--text3);font-weight:600">${pct}%</span><span style="font-size:13px;font-weight:700;color:var(--text)">₹${Math.round(c.amount)}</span></div>`;
+            contribBody.appendChild(row);
+          });
+          contribHd.addEventListener('click',()=>{const open=contribBody.style.display==='none';contribBody.style.display=open?'':'none';contribHd.querySelector('span:last-child').style.transform=open?'rotate(180deg)':'rotate(0deg)';});
+          contribWrap.appendChild(contribHd);contribWrap.appendChild(contribBody);body.appendChild(contribWrap);
+        }
+      }
+
       hd.addEventListener('click',()=>{const ch=hd.querySelector('.dues-week-chevron'),open=!body.classList.contains('collapsed');body.classList.toggle('collapsed',open);ch.classList.toggle('open',!open);});
-      if(!isOngoing&&isOver){
-        const leaveNotes=getCaptainLeaveNotes(wk.monday);
-        if(leaveNotes.length){const noteEl=document.createElement('div');noteEl.className='captain-leave-note';noteEl.style.margin='8px 14px 0';noteEl.innerHTML=`<span class="captain-leave-note-icon">🚗</span><span><strong>Captain on leave:</strong> ${leaveNotes.join('; ')}</span>`;body.prepend(noteEl);}
-      }
-      // Contributions breakdown
-      const contribs=getWeekContributions(wk.monday);
-      if(contribs.length){
-        const weekFuelCost=contribs.reduce((s,c)=>s+c.amount,0);
-        const contribWrap=document.createElement('div');contribWrap.style.cssText='margin:8px 14px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);overflow:hidden';
-        const contribHd=document.createElement('div');contribHd.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px';
-        contribHd.innerHTML=`<span>💰 Contributions${isOngoing?' (projected)':''} · Total ₹${Math.round(weekFuelCost)}</span><span style="font-size:10px;color:var(--text3)">▼</span>`;
-        const contribBody=document.createElement('div');contribBody.style.cssText='background:var(--white);display:none';
-        contribs.forEach(c=>{
-          const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-top:1px solid var(--border)';
-          const pct=weekFuelCost>0?Math.round((c.amount/weekFuelCost)*100):0;
-          const roleTag=c.role==='captain'?'<span style="font-size:9px;font-weight:700;background:var(--purple-soft);color:var(--purple);border:1px solid var(--purple-border);border-radius:20px;padding:1px 6px;margin-left:5px">CAPTAIN</span>':'';
-          row.innerHTML=`<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1"><div style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0"></div><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}${roleTag}</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><span style="font-size:10px;color:var(--text3);font-weight:600">${pct}%</span><span style="font-size:13px;font-weight:700;color:var(--text)">₹${Math.round(c.amount)}</span></div>`;
-          contribBody.appendChild(row);
-        });
-        contribHd.addEventListener('click',()=>{const open=contribBody.style.display==='none';contribBody.style.display=open?'':'none';contribHd.querySelector('span:last-child').style.transform=open?'rotate(180deg)':'rotate(0deg)';});
-        contribWrap.appendChild(contribHd);contribWrap.appendChild(contribBody);body.appendChild(contribWrap);
-      }
       block.appendChild(hd);block.appendChild(body);container.appendChild(block);
     });
-    if(!weekList.length)container.innerHTML='<div style="font-size:13px;color:var(--text3);padding:6px 0">No weeks to show yet.</div>';
+
+    if(!cfg.riders.length)container.innerHTML='<div style="font-size:13px;color:var(--text3);padding:6px 0">No riders configured.</div>';
   }
 
   // ── Personal Dashboard ────────────────────────────────
