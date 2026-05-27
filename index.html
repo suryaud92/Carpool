@@ -642,7 +642,7 @@
   onValue(dataRef,snap=>{data=snap.val()||{};dataLoaded=true;checkReady();if(fbReady){renderPersonalDashboard();renderAdminDues();}});
   onValue(settlementsRef,snap=>{settlements=snap.val()||{};settlementsLoaded=true;checkReady();if(fbReady){renderPersonalDashboard();renderAdminDues();}});
   onValue(adjustmentsRef,snap=>{adjustments=snap.val()||{};adjustmentsLoaded=true;checkReady();if(fbReady){renderPersonalDashboard();renderAdminDues();}});
-  function checkReady(){if(dataLoaded&&settlementsLoaded&&configLoaded&&!fbReady){fbReady=true;adjustmentsLoaded=true;setSyncStatus('synced','Synced');renderAll();}}
+  function checkReady(){if(dataLoaded&&settlementsLoaded&&configLoaded&&adjustmentsLoaded&&!fbReady){fbReady=true;setSyncStatus('synced','Synced');renderAll();}}
   onValue(ref(db,'.info/connected'),snap=>{if(!snap.val())setSyncStatus('error','Offline');else if(fbReady)setSyncStatus('synced','Synced');});
 
   let saveTimer=null;
@@ -698,8 +698,6 @@
     });
     const mr=getMorningRiders().filter(k=>{if(k==='captain')return true;if(!activeKeys.has(k))return false;return!riderEffectiveLeave[k].morning;});
     const er=getEveningRiders().filter(k=>{if(k==='captain')return true;if(!activeKeys.has(k))return false;return!riderEffectiveLeave[k].evening;});
-    // Null-safe: treat null/missing session data as captain present
-    // Firebase can store null instead of {} which would incorrectly skip the session
     if((!entry.morning||(entry.morning.captain!==false))&&mr.length>1){
       const s=cfg.morningCost/mr.length;
       mr.filter(k=>k!=='captain').forEach(p=>{dues[p]=(dues[p]||0)+s;});
@@ -715,8 +713,7 @@
 
   function getMyRider(){if(currentRole==='admin'||!currentUser)return null;return cfg.riders.find(r=>r.email&&r.email.toLowerCase()===currentUser.email.toLowerCase())||null;}
   function istNow(){const n=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));n.setHours(0,0,0,0);return n;}
-  function istNowWithTime(){return new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));}
-  function weekIsOver(monday){const fri=new Date(monday);fri.setDate(fri.getDate()+4);const cutoff=new Date(fri);cutoff.setHours(16,30,0,0);return istNowWithTime()>=cutoff;}
+  function weekIsOver(monday){const fri=new Date(monday);fri.setDate(fri.getDate()+4);fri.setHours(0,0,0,0);return istNow()>fri;}
 
   // ── Leave helpers ─────────────────────────────────────
   function getLeaveThreshold(rider){return rider&&rider.sessions&&rider.sessions.length>=2?5:3;}
@@ -1019,10 +1016,7 @@
 
   // ── GPay ─────────────────────────────────────────────
   let gpayPendingPerson=null;
-  function fireGpay(url,fallback){
-    window.location.href=url;
-    setTimeout(()=>{if(!document.hidden)window.location.href=fallback;},1200);
-  }
+  function fireGpay(url,fallback){const i=document.createElement('iframe');i.style.display='none';document.body.appendChild(i);i.src=url;setTimeout(()=>{document.body.removeChild(i);if(document.hasFocus()){const f=document.createElement('iframe');f.style.display='none';document.body.appendChild(f);f.src=fallback;setTimeout(()=>document.body.removeChild(f),1500);}},1500);}
   function buildUpiParams(amt,label){return`pa=surya.ud92-1@okhdfcbank&pn=Surya&am=${Math.round(amt)}&cu=INR&tn=${encodeURIComponent('Narayana Carpool '+label)}`;}
 
   // ── Grouped weeks ─────────────────────────────────────
@@ -1054,60 +1048,32 @@
   }
 
   function getWeekContributions(monday){
-    // Derive contributions directly from calculateDayDue to guarantee
-    // they always match dues exactly — single source of truth.
-    // Captain's contribution = their own head share per session
-    // = total session cost - what passengers owe captain = cost - (cost - headShare) = headShare
     const totals={captain:0};
     cfg.riders.forEach(r=>{totals[r.key]=0;});
-    // Precompute leave cache for the week (same as buildGroupedWeeks)
-    let weekLeaveCache={};
-    cfg.riders.forEach(r=>{
-      const sc=getRiderLeaveSessionsInWeek(r.key,monday,r);
-      weekLeaveCache[r.key]={adjustDues:sc>=getLeaveThreshold(r)};
-    });
+    const riderWeekLeave={};
+    cfg.riders.forEach(r=>{const sc=getRiderLeaveSessionsInWeek(r.key,monday,r);riderWeekLeave[r.key]={adjustDues:sc>=getLeaveThreshold(r)};});
     getWeekDays(monday).forEach(d=>{
       const ds=toDateStr(d),entry=data[ds]||{morning:{captain:true},evening:{captain:true}};
-      // Active riders filter — same as calculateDayDue
       const activeKeys=new Set(cfg.riders.filter(r=>{
         const sd=r.startDate?parseDate(r.startDate):new Date(2000,0,1);
         if(d<sd)return false;
         if(r.pausedFrom&&r.pausedUntil){const pFrom=parseDate(r.pausedFrom),pUntil=parseDate(r.pausedUntil);if(d>=pFrom&&d<=pUntil)return false;}
         return true;
       }).map(r=>r.key));
-      // Use the SAME rider lists as calculateDayDue — getMorningRiders/getEveningRiders
-      // filtered by active + leave, so contributions always match dues
-      const riderEffectiveLeave={};
-      cfg.riders.forEach(r=>{
-        const lv=data[ds]&&data[ds].leave&&data[ds].leave[r.key];
-        riderEffectiveLeave[r.key]={
-          morning:!!(weekLeaveCache[r.key].adjustDues&&lv&&lv.morning),
-          evening:!!(weekLeaveCache[r.key].adjustDues&&lv&&lv.evening),
-        };
+      [['morning',cfg.morningCost],['evening',cfg.eveningCost]].forEach(([sess,cost])=>{
+        const captainPresent=!entry[sess]||(entry[sess].captain!==false);
+        if(!captainPresent)return;
+        const presentRiders=cfg.riders.filter(r=>{
+          if(!r.sessions.includes(sess))return false;if(!activeKeys.has(r.key))return false;
+          const lv=data[ds]&&data[ds].leave&&data[ds].leave[r.key];
+          return!(riderWeekLeave[r.key].adjustDues&&lv&&lv[sess]);
+        });
+        const totalTravellers=presentRiders.length+1;
+        if(totalTravellers<2){totals.captain+=cost;return;}
+        const headShare=cost/totalTravellers;
+        presentRiders.forEach(r=>{totals[r.key]+=headShare;});
+        totals.captain+=headShare;
       });
-      const mr=getMorningRiders().filter(k=>{if(k==='captain')return true;if(!activeKeys.has(k))return false;return!riderEffectiveLeave[k].morning;});
-      const er=getEveningRiders().filter(k=>{if(k==='captain')return true;if(!activeKeys.has(k))return false;return!riderEffectiveLeave[k].evening;});
-      // Morning
-      if(entry.morning&&entry.morning.captain!==false){
-        if(mr.length>1){
-          const headShare=cfg.morningCost/mr.length;
-          mr.filter(k=>k!=='captain').forEach(k=>{totals[k]+=headShare;});
-          totals.captain+=headShare;
-        } else {
-          // Captain alone — bears full cost
-          totals.captain+=cfg.morningCost;
-        }
-      }
-      // Evening
-      if(entry.evening&&entry.evening.captain!==false){
-        if(er.length>1){
-          const headShare=cfg.eveningCost/er.length;
-          er.filter(k=>k!=='captain').forEach(k=>{totals[k]+=headShare;});
-          totals.captain+=headShare;
-        } else {
-          totals.captain+=cfg.eveningCost;
-        }
-      }
     });
     const out=[];
     if(totals.captain>0)out.push({key:'captain',name:'Surya (Captain)',color:'#1a1917',role:'captain',amount:totals.captain});
