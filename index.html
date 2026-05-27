@@ -1393,12 +1393,7 @@
     if(adjTotal!==0)pendingCount=Math.max(pendingCount,1);
     unsettled.sort((a,b)=>a.wk<b.wk?1:-1);
 
-    const now=istNow(),thisWeekMonday=getMonday(now);
-    let thisWeekEst=0;
-    getWeekDays(thisWeekMonday).forEach(d=>{
-      const ds=toDateStr(d),entry=data[ds]||{morning:{captain:true},evening:{captain:true}};
-      thisWeekEst+=(calculateDayDue(entry,d)[rider.key]||0);
-    });
+    const now=istNow();
 
     const initials=rider.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
     const monday=getMonday(realToday);
@@ -1508,11 +1503,7 @@
       }
     });
 
-    const bottomHtml=outstanding>0?`<div class="dash-total-row">
-        <span style="font-size:13px;color:var(--text2)">Total due</span>
-        <span style="font-size:18px;font-weight:700;color:var(--orange)">₹${Math.round(outstanding)}</span>
-      </div>
-      <button class="make-payment-btn" id="makePaymentBtn">⚡ Make Payment</button>`:'';
+    const bottomHtml=outstanding>0?`<button class="make-payment-btn" id="makePaymentBtn">⚡ Make Payment</button>`:'';
 
     // Build rider leave strip
     const stripMonday=getRiderLeaveStripMonday();
@@ -1587,7 +1578,7 @@
       </div>
       ${isRiderPaused(rider)?`<div style="background:var(--yellow-soft);border:1px solid var(--yellow-border);border-radius:9px;padding:10px 12px;font-size:12px;color:var(--yellow);font-weight:600;margin-bottom:14px">⏸ Account paused · ${getPauseLabel(rider)}<br><span style="font-weight:400;font-size:11px">No dues are accruing during this period.</span></div>`:''}
       <div class="dash-metric-row">
-        <div class="dash-metric"><div class="dash-metric-label">This week (est.)</div><div class="dash-metric-value">₹${Math.round(thisWeekEst)}</div></div>
+        <div class="dash-metric"><div class="dash-metric-label">Total due</div><div class="dash-metric-value ${outstanding>0?'warn':'ok'}">${outstanding>0?'₹'+Math.round(outstanding):'✓ Clear'}</div></div>
         <div class="dash-metric"><div class="dash-metric-label">Weeks pending</div><div class="dash-metric-value ${pendingCount>0?'warn':'ok'}">${pendingCount}</div></div>
       </div>
       <div style="margin-bottom:4px">${weeksHtml}</div>
