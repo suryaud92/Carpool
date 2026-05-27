@@ -1428,36 +1428,51 @@
     // Standalone adjustment block for adjs with no resolvedInWeekKey (no future unsettled week found)
     const orphanAdjs=pendingAdjs.filter(a=>!a.resolvedInWeekKey);
 
-    let dueBlocksHtml='';
-    if(!unsettled.length&&adjTotal===0){
-      dueBlocksHtml=`<div style="padding:12px 0;font-size:13px;color:var(--text2);text-align:center">✓ All dues cleared</div>`;
-    } else {
-      // Orphan adjustments shown as a standalone block at the top
-      if(orphanAdjs.length){
-        orphanAdjs.forEach(a=>{
-          const sign=a.direction==='owe'?'+':'-';
-          const color=a.direction==='owe'?'var(--orange)':'var(--green)';
-          dueBlocksHtml+=`<div class="dash-week-block unpaid" style="border-color:${color}">
-            <div class="dash-week-block-hd">
-              <div><div class="dash-week-label">Pending Adjustment</div><div class="dash-week-amt orange">${sign}₹${Math.round(a.amount)}</div></div>
-            </div>
-            <div style="padding:0 12px 10px;font-size:11px;color:${color};line-height:1.5">${a.reason}<br><span style="opacity:0.8">From week: ${a.sourceWeekLabel}</span></div>
-          </div>`;
-        });
-      }
-      unsettled.forEach(({wk,details})=>{
-        const sk=`${rider.name}_${wk}`;
+    // ── Unified week list: all unpaid + last 3 paid, newest first ──
+    const settledList=Object.entries(myWeeks)
+      .filter(([wk,d])=>isSettled(`${rider.name}_${wk}`)&&d.amount>0)
+      .sort(([a],[b])=>a<b?1:-1).slice(0,3);
+
+    // Merge unsettled + settled, sort newest first
+    const allWeekRows=[
+      ...unsettled.map(u=>({wk:u.wk,details:u.details,paid:false})),
+      ...settledList.map(([wk,d])=>({wk,details:d,paid:true}))
+    ].sort((a,b)=>a.wk<b.wk?1:-1);
+
+    let weeksHtml='';
+
+    // Orphan adjustments (no target week) at the very top
+    if(orphanAdjs.length){
+      orphanAdjs.forEach(a=>{
+        const sign=a.direction==='owe'?'+':'-';
+        const color=a.direction==='owe'?'var(--orange)':'var(--green)';
+        weeksHtml+=`<div class="dash-week-block unpaid" style="border-color:${color}">
+          <div class="dash-week-block-hd">
+            <div><div class="dash-week-label">Pending Adjustment</div><div class="dash-week-amt orange">${sign}₹${Math.round(a.amount)}</div></div>
+          </div>
+          <div style="padding:0 12px 10px;font-size:11px;color:${color};line-height:1.5">${a.reason}<br><span style="opacity:0.8">From week: ${a.sourceWeekLabel}</span></div>
+        </div>`;
+      });
+    }
+
+    if(!allWeekRows.length&&!orphanAdjs.length){
+      weeksHtml=`<div style="padding:12px 0;font-size:13px;color:var(--text2);text-align:center">✓ No dues yet</div>`;
+    }
+
+    allWeekRows.forEach(({wk,details,paid})=>{
+      const sk=`${rider.name}_${wk}`;
+      if(!paid){
+        // ── Unpaid week ──
         const leaveNotes=getCaptainLeaveNotes(details.monday);
         const leaveHtml=leaveNotes.length?`<div class="captain-leave-note"><span class="captain-leave-note-icon">🚗</span><span><strong>Captain on leave:</strong> ${leaveNotes.join('; ')}</span></div>`:'';
         const riderLeaveSessions=getRiderLeaveSessionsInWeek(rider.key,details.monday,rider);
         const riderLeaveHtml=riderLeaveSessions>=getLeaveThreshold(rider)?`<div style="display:flex;align-items:center;gap:6px;padding:0 12px 8px;font-size:11px;color:var(--red)">🏖 Your ${riderLeaveSessions}-session leave applied — dues adjusted</div>`:'';
         const adjRolloverHtml=buildAdjRolloverHtml(wk);
         const contribHtml=buildContribStripHtml(details.monday);
-        // Base amount + any rolled-in adjustments
         const rolledInAdjs=pendingAdjs.filter(a=>a.resolvedInWeekKey===wk);
         const rolledInTotal=rolledInAdjs.reduce((sum,a)=>sum+(a.direction==='owe'?a.amount:-a.amount),0);
         const totalDue=details.amount+rolledInTotal;
-        dueBlocksHtml+=`<div class="dash-week-block unpaid">
+        weeksHtml+=`<div class="dash-week-block unpaid">
           <div class="dash-week-block-hd">
             <div>
               <div class="dash-week-label">${details.label}</div>
@@ -1470,27 +1485,34 @@
           ${leaveHtml?`<div style="padding:0 12px 10px">${leaveHtml}</div>`:''}
           ${contribHtml}
         </div>`;
-      });
-      dueBlocksHtml+=`<div class="dash-total-row">
+      } else {
+        // ── Paid week ──
+        const wkAdjs=getAdjustmentsForWeek(rider.name,wk);
+        const adjHtml=wkAdjs.length?wkAdjs.map(a=>{
+          const sign=a.direction==='owe'?'+':'-';
+          const color=a.direction==='owe'?'var(--orange)':'var(--green)';
+          return`<div style="padding:4px 12px 6px;font-size:11px;color:${color};line-height:1.5">⚠ ${sign}₹${Math.round(a.amount)} — ${a.reason} · rolled to ${a.resolvedInWeekKey?'next due week':'pending'}</div>`;
+        }).join(''):'';
+        weeksHtml+=`<div class="dash-week-block paid">
+          <div class="dash-week-block-hd">
+            <div><div class="dash-week-label">${details.label}</div><div class="dash-week-amt green">₹${Math.round(details.amount)}</div></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="dash-badge paid">✓ Paid</span>
+              <button class="action-btn btn-revert" style="font-size:11px;padding:4px 9px" data-revert="${sk}">Revert</button>
+            </div>
+          </div>
+          ${adjHtml}
+          ${buildContribStripHtml(details.monday)}
+        </div>`;
+      }
+    });
+
+    // Total + pay button shown only when there are unpaid weeks
+    const bottomHtml=outstanding>0?`<div class="dash-total-row">
         <span style="font-size:13px;color:var(--text2)">Total due</span>
         <span style="font-size:18px;font-weight:700;color:var(--orange)">₹${Math.round(outstanding)}</span>
       </div>
-      <button class="make-payment-btn" id="makePaymentBtn">⚡ Make Payment</button>`;
-    }
-
-    const settledList=Object.entries(myWeeks).filter(([wk,d])=>isSettled(`${rider.name}_${wk}`)&&d.amount>0).sort(([a],[b])=>a<b?1:-1).slice(0,5);
-    let histHtml=settledList.length
-      ?settledList.map(([wk,d])=>{
-          const sk=`${rider.name}_${wk}`;
-          const wkAdjs=getAdjustmentsForWeek(rider.name,wk);
-          const adjHtml=wkAdjs.length?wkAdjs.map(a=>{
-            const sign=a.direction==='owe'?'+':'-';
-            const color=a.direction==='owe'?'var(--orange)':'var(--green)';
-            return`<div style="padding:4px 12px 6px;font-size:11px;color:${color};line-height:1.5">⚠ ${sign}₹${Math.round(a.amount)} — ${a.reason} · rolled to ${a.resolvedInWeekKey?'next due week':'pending'}</div>`;
-          }).join(''):'';
-          return`<div class="dash-week-block paid"><div class="dash-week-block-hd"><div><div class="dash-week-label">${d.label}</div><div class="dash-week-amt green">₹${Math.round(d.amount)}</div></div><div style="display:flex;align-items:center;gap:8px"><span class="dash-badge paid">✓ Paid</span><button class="action-btn btn-revert" style="font-size:11px;padding:4px 9px" data-revert="${sk}">Revert</button></div></div>${adjHtml}${buildContribStripHtml(d.monday)}</div>`;
-        }).join('')
-      :`<div style="padding:12px 0;font-size:13px;color:var(--text2);text-align:center">No payment history yet</div>`;
+      <button class="make-payment-btn" id="makePaymentBtn">⚡ Make Payment</button>`:'';
 
     // Build rider leave strip
     const stripMonday=getRiderLeaveStripMonday();
@@ -1569,12 +1591,8 @@
         <div class="dash-metric"><div class="dash-metric-label">This week (est.)</div><div class="dash-metric-value">₹${Math.round(thisWeekEst)}</div></div>
         <div class="dash-metric"><div class="dash-metric-label">Weeks pending</div><div class="dash-metric-value ${pendingCount>0?'warn':'ok'}">${pendingCount}</div></div>
       </div>
-      <div class="dash-tab-row">
-        <button class="dash-tab active" id="dashTabDue" onclick="switchDashTab('due')">Dues</button>
-        <button class="dash-tab" id="dashTabHist" onclick="switchDashTab('hist')">History</button>
-      </div>
-      <div id="dashDuePanel">${dueBlocksHtml}</div>
-      <div id="dashHistPanel" style="display:none">${histHtml}</div>
+      <div style="margin-top:4px">${weeksHtml}</div>
+      ${bottomHtml}
     </div>`;
 
     document.querySelectorAll('#riderLeaveGrid .captain-day-btn:not([disabled])').forEach(btn=>{
@@ -1673,13 +1691,6 @@
   document.getElementById('gpayConfirmOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeGpayConfirm();});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&gpayPendingPerson)setTimeout(()=>document.getElementById('gpayConfirmOverlay').classList.add('open'),400);});
 
-  window.switchDashTab=function(tab){
-    document.getElementById('dashTabDue')?.classList.toggle('active',tab==='due');
-    document.getElementById('dashTabHist')?.classList.toggle('active',tab==='hist');
-    const dp=document.getElementById('dashDuePanel'),hp=document.getElementById('dashHistPanel');
-    if(dp)dp.style.display=tab==='due'?'':'none';
-    if(hp)hp.style.display=tab==='hist'?'':'none';
-  };
 
 
 
