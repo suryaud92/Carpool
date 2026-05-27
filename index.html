@@ -496,6 +496,11 @@
       </div>
     </div>
     <div class="form-row"><label class="form-label">Colour</label><div class="color-swatches" id="reColorSwatches"></div></div>
+    <div class="form-row" id="sessionHistoryRow">
+      <label class="form-label">Session History</label>
+      <div id="sessionHistoryList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+      <button type="button" id="addSessionChangeBtn" style="width:100%;padding:8px;border:1.5px dashed var(--border2);border-radius:9px;background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer">+ Add session change</button>
+    </div>
     <div class="modal-actions" style="margin-top:18px">
       <button class="modal-cancel" id="riderEditCancel">Cancel</button>
       <button class="modal-confirm" id="riderEditConfirm">Save</button>
@@ -686,8 +691,15 @@
         evening:!!(leaveCache[r.key].adjustDues&&lv&&lv.evening),
       };
     });
-    const mr=getMorningRiders().filter(k=>{if(k==='captain')return true;if(!activeKeys.has(k))return false;return!riderEffectiveLeave[k].morning;});
-    const er=getEveningRiders().filter(k=>{if(k==='captain')return true;if(!activeKeys.has(k))return false;return!riderEffectiveLeave[k].evening;});
+    // Use date-aware sessions for each rider
+    const mr=['captain',...cfg.riders.filter(r=>{
+      if(!activeKeys.has(r.key))return false;
+      return getRiderSessionsOnDate(r,date).includes('morning')&&!riderEffectiveLeave[r.key].morning;
+    }).map(r=>r.key)];
+    const er=['captain',...cfg.riders.filter(r=>{
+      if(!activeKeys.has(r.key))return false;
+      return getRiderSessionsOnDate(r,date).includes('evening')&&!riderEffectiveLeave[r.key].evening;
+    }).map(r=>r.key)];
     if(entry.morning&&entry.morning.captain!==false&&mr.length>1){
       const s=cfg.morningCost/mr.length;
       mr.filter(k=>k!=='captain').forEach(p=>{dues[p]=(dues[p]||0)+s;});
@@ -713,15 +725,30 @@
   }
 
   // ── Leave helpers ─────────────────────────────────────
-  function getLeaveThreshold(rider){return rider&&rider.sessions&&rider.sessions.length>=2?5:3;}
+  // Returns the sessions a rider was enrolled in on a specific date,
+  // using sessionChanges history if available, falling back to rider.sessions.
+  function getRiderSessionsOnDate(rider, date){
+    if(!rider.sessionChanges||!rider.sessionChanges.length) return rider.sessions||[];
+    const sorted=[...rider.sessionChanges]
+      .filter(c=>parseDate(c.date)<=date)
+      .sort((a,b)=>a.date<b.date?1:-1);
+    return sorted.length?sorted[0].sessions:(rider.sessions||[]);
+  }
+
+  // Leave threshold is date-aware: uses sessions the rider had during that week
+  function getLeaveThreshold(rider,date){
+    const sess=date?getRiderSessionsOnDate(rider,date):rider.sessions||[];
+    return sess.length>=2?5:3;
+  }
   function getRiderLeaveDaysInWeek(riderKey,monday){let count=0;getWeekDays(monday).forEach(d=>{const ds=toDateStr(d);if(data[ds]&&data[ds].leave&&data[ds].leave[riderKey])count++;});return count;}
   function getRiderLeaveSessionsInWeek(riderKey,monday,rider){
     let count=0;
     getWeekDays(monday).forEach(d=>{
       const ds=toDateStr(d),lv=data[ds]&&data[ds].leave&&data[ds].leave[riderKey];
       if(!lv)return;
-      if(rider.sessions.includes('morning')&&lv.morning)count++;
-      if(rider.sessions.includes('evening')&&lv.evening)count++;
+      const sess=getRiderSessionsOnDate(rider,d);
+      if(sess.includes('morning')&&lv.morning)count++;
+      if(sess.includes('evening')&&lv.evening)count++;
     });
     return count;
   }
@@ -734,25 +761,36 @@
     const map={};
     getWeekDays(monday).forEach(d=>{
       const ds=toDateStr(d),lv=data[ds]&&data[ds].leave&&data[ds].leave[riderKey];
-      map[ds]={morning:rider.sessions.includes('morning')?!!(lv&&lv.morning):false,evening:rider.sessions.includes('evening')?!!(lv&&lv.evening):false};
+      const sess=getRiderSessionsOnDate(rider,d);
+      map[ds]={morning:sess.includes('morning')?!!(lv&&lv.morning):false,evening:sess.includes('evening')?!!(lv&&lv.evening):false};
     });
     return map;
   }
 
   function applyLeaveToData(riderKey,leaveMap,rider){
     let totalLeaveSessions=0;
-    Object.values(leaveMap).forEach(s=>{if(rider.sessions.includes('morning')&&s.morning)totalLeaveSessions++;if(rider.sessions.includes('evening')&&s.evening)totalLeaveSessions++;});
-    const threshold=getLeaveThreshold(rider),adjustDues=totalLeaveSessions>=threshold;
+    // Count sessions using date-aware enrollment
+    Object.entries(leaveMap).forEach(([ds,s])=>{
+      const d=parseDate(ds),sess=getRiderSessionsOnDate(rider,d);
+      if(sess.includes('morning')&&s.morning)totalLeaveSessions++;
+      if(sess.includes('evening')&&s.evening)totalLeaveSessions++;
+    });
+    // Use monday of the leave week for threshold (pick first day in map)
+    const firstDs=Object.keys(leaveMap)[0];
+    const leaveWeekDate=firstDs?parseDate(firstDs):new Date();
+    const threshold=getLeaveThreshold(rider,leaveWeekDate),adjustDues=totalLeaveSessions>=threshold;
     const riderStart=rider.startDate?parseDate(rider.startDate):new Date(2000,0,1);
     Object.entries(leaveMap).forEach(([ds,sessions])=>{
-      if(parseDate(ds)<riderStart)return;
+      const dayDate=parseDate(ds);
+      if(dayDate<riderStart)return;
       if(!data[ds])data[ds]={morning:{},evening:{}};
       if(!data[ds].morning)data[ds].morning={};if(!data[ds].evening)data[ds].evening={};
       const hasAnyLeave=!!(sessions.morning||sessions.evening);
       if(hasAnyLeave){if(!data[ds].leave)data[ds].leave={};data[ds].leave[riderKey]={morning:!!sessions.morning,evening:!!sessions.evening};}
       else if(data[ds].leave){delete data[ds].leave[riderKey];if(!Object.keys(data[ds].leave).length)delete data[ds].leave;}
-      if(rider.sessions.includes('morning'))data[ds].morning[riderKey]=adjustDues?!sessions.morning:true;
-      if(rider.sessions.includes('evening'))data[ds].evening[riderKey]=adjustDues?!sessions.evening:true;
+      const sess=getRiderSessionsOnDate(rider,dayDate);
+      if(sess.includes('morning'))data[ds].morning[riderKey]=adjustDues?!sessions.morning:true;
+      if(sess.includes('evening'))data[ds].evening[riderKey]=adjustDues?!sessions.evening:true;
     });
   }
 
@@ -760,8 +798,9 @@
     leaveDates.forEach(ds=>{
       if(!data[ds])return;
       if(data[ds].leave){delete data[ds].leave[riderKey];if(!Object.keys(data[ds].leave).length)delete data[ds].leave;}
-      if(rider.sessions.includes('morning')&&data[ds].morning)data[ds].morning[riderKey]=true;
-      if(rider.sessions.includes('evening')&&data[ds].evening)data[ds].evening[riderKey]=true;
+      const sess=getRiderSessionsOnDate(rider,parseDate(ds));
+      if(sess.includes('morning')&&data[ds].morning)data[ds].morning[riderKey]=true;
+      if(sess.includes('evening')&&data[ds].evening)data[ds].evening[riderKey]=true;
     });
   }
 
@@ -923,7 +962,8 @@
       const sessRow=document.createElement('div');sessRow.className='sess-btns';
       const capMornOff=data[ds]&&data[ds].morning&&data[ds].morning.captain===false;
       const capEveOff=data[ds]&&data[ds].evening&&data[ds].evening.captain===false;
-      if(rider.sessions.includes('morning')){
+      const daySessions=getRiderSessionsOnDate(rider,d);
+      if(daySessions.includes('morning')){
         const mb=document.createElement('button');
         const capOff=capMornOff;
         mb.className=`sess-btn${sess.morning?' active':''}${capOff?' captain-off':''}`;
@@ -932,7 +972,7 @@
         if(!capOff&&!isBeforeStart)mb.addEventListener('click',()=>{pendingLeave[ds]={...pendingLeave[ds],morning:!pendingLeave[ds].morning};renderLeaveModal();});
         sessRow.appendChild(mb);
       }
-      if(rider.sessions.includes('evening')){
+      if(daySessions.includes('evening')){
         const eb=document.createElement('button');
         const capOff=capEveOff;
         eb.className=`sess-btn${sess.evening?' active':''}${capOff?' captain-off':''}`;
@@ -945,9 +985,10 @@
     });
 
     let count=0;
-    const maxSessions=rider.sessions.length*5;
+    // Max sessions = sum of sessions the rider had on each day of the week
+    const maxSessions=getWeekDays(monday).reduce((sum,d)=>sum+getRiderSessionsOnDate(rider,d).length,0);
     Object.values(pendingLeave).forEach(s=>{if(s.morning)count++;if(s.evening)count++;});
-    const threshold=getLeaveThreshold(rider);
+    const threshold=getLeaveThreshold(rider,monday);
     const ruleNote=document.getElementById('leaveRuleNote');
     if(ruleNote)ruleNote.innerHTML=`💡 <strong>Rule:</strong> You can save leave for any number of sessions. Dues are only adjusted when you mark <strong>${threshold} or more sessions</strong> absent in a week.`;
     const countEl=document.getElementById('leaveCountVal');
@@ -1072,7 +1113,8 @@
       [['morning',cfg.morningCost],['evening',cfg.eveningCost]].forEach(([sess,cost])=>{
         if(!(entry[sess]&&entry[sess].captain!==false))return;
         const presentRiders=cfg.riders.filter(r=>{
-          if(!r.sessions.includes(sess))return false;if(!activeKeys.has(r.key))return false;
+          if(!getRiderSessionsOnDate(r,d).includes(sess))return false;
+          if(!activeKeys.has(r.key))return false;
           const lv=data[ds]&&data[ds].leave&&data[ds].leave[r.key];
           return!(riderWeekLeave[r.key].adjustDues&&lv&&lv[sess]);
         });
@@ -1507,8 +1549,9 @@
     stripDays.forEach((d,i)=>{
       const ds=toDateStr(d),isFuture=d>realToday,isBeforeStart=d<riderStartDate;
       const lv=data[ds]&&data[ds].leave&&data[ds].leave[rider.key];
-      const mLeave=rider.sessions.includes('morning')&&lv&&lv.morning;
-      const eLeave=rider.sessions.includes('evening')&&lv&&lv.evening;
+      const daySess=getRiderSessionsOnDate(rider,d);
+      const mLeave=daySess.includes('morning')&&lv&&lv.morning;
+      const eLeave=daySess.includes('evening')&&lv&&lv.evening;
       const captainMornOff=data[ds]&&data[ds].morning&&data[ds].morning.captain===false;
       const captainEveOff=data[ds]&&data[ds].evening&&data[ds].evening.captain===false;
       const both=mLeave&&eLeave,either=mLeave||eLeave;
@@ -1517,7 +1560,7 @@
       riderGridHtml+=`<button class="captain-day-btn ${cls}" data-date="${ds}" ${(isFuture||isBeforeStart)?'disabled':''}><span class="cd-name">${DAY_NAMES_STRIP[i]}</span><span class="cd-date">${d.getDate()}</span><span class="cd-sub">${sub}</span></button>`;
     });
     const stripLeaveSessions=getRiderLeaveSessionsInWeek(rider.key,stripMonday,rider);
-    const stripThreshold=getLeaveThreshold(rider);
+    const stripThreshold=getLeaveThreshold(rider,stripMonday);
     const stripLeaveSummary=stripLeaveSessions>0
       ?(stripLeaveSessions>=stripThreshold
         ?`<div style="margin-top:8px;padding:7px 10px;background:var(--red-soft);border:1px solid var(--red-border);border-radius:8px;font-size:11px;color:var(--red);font-weight:600">🏖 ${stripLeaveSessions}-session leave applied — dues adjusted for this week</div>`
@@ -1774,7 +1817,7 @@
   document.getElementById('addRiderBtn').addEventListener('click',()=>{if(currentRole!=='admin'){showToast('⚠ Admin access required');return;}openRiderEdit(null);});
 
   // ── Rider edit ────────────────────────────────────────
-  let riderEditIdx=null,riderEditSessions=new Set(),riderEditColor=PALETTE[0];
+  let riderEditIdx=null,riderEditSessions=new Set(),riderEditColor=PALETTE[0],riderEditSessionChanges=[];
   function openRiderEdit(idx){
     if(currentRole!=='admin'){showToast('⚠ Admin access required');return;}
     riderEditIdx=idx;const isNew=idx===null;
@@ -1782,12 +1825,90 @@
     document.getElementById('riderEditTitle').textContent=isNew?'Add Co-Traveller':`Edit ${rider.name}`;
     document.getElementById('re-name').value=rider.name;document.getElementById('re-email').value=rider.email||'';document.getElementById('re-startdate').value=rider.startDate||'';
     riderEditSessions=new Set(rider.sessions);riderEditColor=rider.color||PALETTE[0];
-    updateSessionToggles();buildColorSwatches();document.getElementById('riderEditOverlay').classList.add('open');
+    riderEditSessionChanges=JSON.parse(JSON.stringify(rider.sessionChanges||[]));
+    updateSessionToggles();buildColorSwatches();renderSessionHistoryList();
+    document.getElementById('riderEditOverlay').classList.add('open');
   }
-  function updateSessionToggles(){document.getElementById('re-morning').className=`sess-toggle${riderEditSessions.has('morning')?' active':''}`;document.getElementById('re-evening').className=`sess-toggle${riderEditSessions.has('evening')?' active':''}`;}
+  function updateSessionToggles(){document.getElementById('re-morning').className=`sess-toggle${riderEditSessions.has('morning')?' active':''}`;document.getElementById('re-evening').className=`sess-toggle${riderEditSessions.has('evening')?' active':''}`;renderSessionHistoryList();}
+  function updateSessionTogglesOnly(){document.getElementById('re-morning').className=`sess-toggle${riderEditSessions.has('morning')?' active':''}`;document.getElementById('re-evening').className=`sess-toggle${riderEditSessions.has('evening')?' active':''}`;}
+
+  function syncLatestSessionChange(){
+    if(!riderEditSessionChanges.length)return;
+    const latest=[...riderEditSessionChanges].sort((a,b)=>a.date<b.date?1:-1)[0];
+    riderEditSessions=new Set(latest.sessions);
+    updateSessionTogglesOnly();
+  }
+
+  function updateCurrentSessionChange(){
+    const todayStr=toDateStr(realToday);
+    const existing=riderEditSessionChanges.find(sc=>sc.date===todayStr);
+    if(existing){existing.sessions=[...riderEditSessions];}
+    else{riderEditSessionChanges.push({date:todayStr,sessions:[...riderEditSessions]});}
+  }
+
+  function renderSessionHistoryList(){
+    const list=document.getElementById('sessionHistoryList');
+    if(!list)return;
+    list.innerHTML='';
+    const sorted=[...riderEditSessionChanges].sort((a,b)=>a.date<b.date?-1:1);
+    if(!sorted.length){
+      const empty=document.createElement('div');
+      empty.style='font-size:11px;color:var(--text3);padding:4px 0';
+      empty.textContent='No session history yet. Add a change to track when sessions changed.';
+      list.appendChild(empty);return;
+    }
+    sorted.forEach((sc,i)=>{
+      const originalIdx=riderEditSessionChanges.indexOf(sc);
+      const row=document.createElement('div');
+      row.style='display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:9px;flex-wrap:wrap';
+      const sessLabel=sc.sessions.map(s=>s==='morning'?'🌅':'🌆').join(' + ');
+      // Session toggle buttons
+      const btnRow=document.createElement('div');btnRow.style='display:flex;gap:4px';
+      ['morning','evening'].forEach(sess=>{
+        const btn=document.createElement('button');
+        const active=sc.sessions.includes(sess);
+        btn.style=`font-size:11px;padding:4px 9px;border-radius:7px;font-family:inherit;cursor:pointer;border:1.5px solid ${active?'var(--blue)':'var(--border2)'};background:${active?'var(--blue)':'var(--white)'};color:${active?'#fff':'var(--text2)'}`;
+        btn.textContent=sess==='morning'?'🌅 M':'🌆 E';
+        btn.addEventListener('click',()=>{
+          const idx2=sc.sessions.indexOf(sess);
+          if(idx2>=0){if(sc.sessions.length>1)sc.sessions.splice(idx2,1);}
+          else sc.sessions.push(sess);
+          syncLatestSessionChange();renderSessionHistoryList();
+        });
+        btnRow.appendChild(btn);
+      });
+      const dateInput=document.createElement('input');
+      dateInput.type='date';dateInput.value=sc.date;
+      dateInput.style='font-size:11px;padding:4px 7px;border:1.5px solid var(--border2);border-radius:7px;font-family:inherit;background:var(--white);flex:1;min-width:100px';
+      dateInput.addEventListener('change',e=>{
+        riderEditSessionChanges[originalIdx].date=e.target.value;
+        syncLatestSessionChange();renderSessionHistoryList();
+      });
+      const delBtn=document.createElement('button');
+      delBtn.style='background:var(--red-soft);border:1px solid var(--red-border);color:var(--red);border-radius:7px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:inherit';
+      delBtn.textContent='✕';
+      delBtn.addEventListener('click',()=>{
+        riderEditSessionChanges.splice(originalIdx,1);
+        syncLatestSessionChange();renderSessionHistoryList();
+      });
+      row.appendChild(btnRow);row.appendChild(dateInput);row.appendChild(delBtn);
+      list.appendChild(row);
+    });
+  }
   function buildColorSwatches(){const c=document.getElementById('reColorSwatches');c.innerHTML='';PALETTE.forEach(col=>{const sw=document.createElement('div');sw.className=`color-swatch${col===riderEditColor?' selected':''}`;sw.style.background=col;sw.addEventListener('click',()=>{riderEditColor=col;buildColorSwatches();});c.appendChild(sw);});}
-  document.getElementById('re-morning').addEventListener('click',()=>{if(riderEditSessions.has('morning'))riderEditSessions.delete('morning');else riderEditSessions.add('morning');updateSessionToggles();});
-  document.getElementById('re-evening').addEventListener('click',()=>{if(riderEditSessions.has('evening'))riderEditSessions.delete('evening');else riderEditSessions.add('evening');updateSessionToggles();});
+  document.getElementById('re-morning').addEventListener('click',()=>{
+    if(riderEditSessions.has('morning'))riderEditSessions.delete('morning');else riderEditSessions.add('morning');
+    updateCurrentSessionChange();updateSessionTogglesOnly();renderSessionHistoryList();
+  });
+  document.getElementById('re-evening').addEventListener('click',()=>{
+    if(riderEditSessions.has('evening'))riderEditSessions.delete('evening');else riderEditSessions.add('evening');
+    updateCurrentSessionChange();updateSessionTogglesOnly();renderSessionHistoryList();
+  });
+  document.getElementById('addSessionChangeBtn')?.addEventListener('click',()=>{
+    const todayStr=toDateStr(realToday);
+    riderEditSessionChanges.push({date:todayStr,sessions:[...riderEditSessions]});
+    renderSessionHistoryList();
+  });
   function saveRiderEdit(){
     if(currentRole!=='admin'){showToast('⚠ Admin access required');return;}
     const name=document.getElementById('re-name').value.trim();
@@ -1795,7 +1916,17 @@
     if(!riderEditSessions.size){showToast('⚠ Select at least one session');return;}
     const email=document.getElementById('re-email').value.trim().toLowerCase();
     const key=name.toLowerCase().replace(/\s+/g,'_');
-    const rider={key,name,email,sessions:[...riderEditSessions],color:riderEditColor,startDate:document.getElementById('re-startdate').value||''};
+    const startDate=document.getElementById('re-startdate').value||'';
+    let finalSessionChanges=[...riderEditSessionChanges];
+    // If no history at all, seed with startDate + current sessions
+    if(!finalSessionChanges.length&&startDate){
+      finalSessionChanges=[{date:startDate,sessions:[...riderEditSessions]}];
+    }
+    finalSessionChanges.sort((a,b)=>a.date<b.date?-1:1);
+    const currentSessions=finalSessionChanges.length
+      ?[...finalSessionChanges[finalSessionChanges.length-1].sessions]
+      :[...riderEditSessions];
+    const rider={key,name,email,sessions:currentSessions,color:riderEditColor,startDate,sessionChanges:finalSessionChanges};
     if(riderEditIdx===null)adminDraft.riders.push(rider);else adminDraft.riders[riderEditIdx]={...adminDraft.riders[riderEditIdx],...rider};
     renderAdminRiderList();closeRiderEdit();
   }
