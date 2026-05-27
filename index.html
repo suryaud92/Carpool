@@ -771,7 +771,13 @@
 
   function getPendingAdjustments(riderName){
     const all=adjustments[riderName]||{};
-    return Object.entries(all).filter(([,a])=>!a.resolved).map(([id,a])=>({id,...a}));
+    return Object.entries(all)
+      .filter(([,a])=>!a.resolved)
+      .map(([id,a])=>({
+        id,...a,
+        // Compute target week dynamically so it always reflects current settlements
+        resolvedInWeekKey:getResolvedInWeekKey(riderName,a.sourceWeekKey),
+      }));
   }
 
   function getAdjustmentsForWeek(riderName,weekKey){
@@ -810,21 +816,16 @@
     return affected;
   }
 
-  // Write adjustments for affected riders; find the next unsettled week to roll into
+  // Write adjustments for affected riders.
+  // resolvedInWeekKey is NOT stored — it is computed dynamically at render time
+  // so it always reflects the current state of settlements.
   function writeAdjustments(affected,sourceWk,triggerRiderName){
     if(!affected.length)return;
     const now=Date.now();
-    affected.forEach(({riderName,diff,newAmount,oldAmount},i)=>{
+    affected.forEach(({riderName,diff},i)=>{
       const direction=diff>0?'owe':'credit';
       const absAmt=Math.abs(diff);
       const adjId=`adj_${now+i}`;
-      // Find the next unsettled week for this rider to roll into
-      const allWks=getAllWeekKeys();
-      const nextUnsettledWk=allWks.slice().reverse().find(w=>{
-        if(!weekIsOver(w.monday))return false;
-        if(w.key===sourceWk.key)return false;
-        return!isSettled(`${riderName}_${w.key}`);
-      });
       if(!adjustments[riderName])adjustments[riderName]={};
       adjustments[riderName][adjId]={
         amount:absAmt,
@@ -833,11 +834,22 @@
         sourceWeekLabel:sourceWk.label,
         reason:`${triggerRiderName} applied leave adjustment`,
         resolved:false,
-        resolvedInWeekKey:nextUnsettledWk?nextUnsettledWk.key:null,
         createdAt:now+i,
       };
     });
     saveAdjustments();
+  }
+
+  // Dynamically find which unsettled week an adjustment should roll into.
+  // Called at render time so it always reflects current settlement state.
+  function getResolvedInWeekKey(riderName,sourceWeekKey){
+    const allWks=getAllWeekKeys();
+    const target=allWks.slice().reverse().find(w=>{
+      if(!weekIsOver(w.monday))return false;
+      if(w.key===sourceWeekKey)return false;
+      return!isSettled(`${riderName}_${w.key}`);
+    });
+    return target?target.key:null;
   }
 
   // Clear unresolved adjustments that originated from a specific week for a rider
