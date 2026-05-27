@@ -1291,7 +1291,10 @@
         if(!settled)actionsHtml=`<button class="action-btn btn-pay" data-pay="${sk}" data-amt="${Math.round(amt)}">Mark Paid</button>`;
         else actionsHtml=`<button class="action-btn btn-revert" data-revert="${sk}">Revert</button>`;
 
-        const row=document.createElement('div');row.className='dues-rider-row';
+        // Wrap each week in a card so the contributions panel sits inside it
+        const card=document.createElement('div');
+        card.style=`border:1px solid ${settled?'var(--green-border)':'var(--orange-border)'};border-radius:9px;background:${settled?'var(--green-soft)':'var(--orange-soft)'};margin-bottom:6px;overflow:hidden`;
+        const row=document.createElement('div');row.className='dues-rider-row';row.style='border:none';
         row.innerHTML=`<div class="dues-rider-left">
           <div style="width:7px;height:7px;border-radius:50%;background:${settled?'var(--green)':'var(--orange)'};flex-shrink:0"></div>
           <div>
@@ -1303,6 +1306,7 @@
           <span class="dues-rider-amt ${amtClass}">₹${Math.round(amt)}</span>
           ${actionsHtml}
         </div>`;
+        card.appendChild(row);
 
         row.querySelector('[data-pay]')?.addEventListener('click',e=>{
           const s=e.currentTarget.dataset.pay,a=parseFloat(e.currentTarget.dataset.amt);
@@ -1318,34 +1322,32 @@
             const adjRow=document.createElement('div');adjRow.className=`adj-note ${a.direction}`;
             const sign=a.direction==='owe'?'+':'-';
             adjRow.innerHTML=`<span>⚠</span><span>${a.reason} · ${sign}₹${Math.round(a.amount)} — rolled to next due week</span>`;
-            body.appendChild(adjRow);
+            card.appendChild(adjRow);
           });
         }
-        body.appendChild(row);
-      });
 
-      // Contributions panel at the bottom of each rider block (last settled or current week)
-      const latestWk=weekRows[0]||inProgressWk;
-      if(latestWk){
-        const contribs=getWeekContributions(latestWk.monday);
+        // Contributions panel per week card
+        const contribs=getWeekContributions(wk.monday);
         if(contribs.length){
           const weekFuelCost=contribs.reduce((s,c)=>s+c.amount,0);
-          const contribWrap=document.createElement('div');contribWrap.style.cssText='margin:8px 14px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);overflow:hidden';
-          const contribHd=document.createElement('div');contribHd.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px';
-          contribHd.innerHTML=`<span>💰 Latest Week Contributions · Total ₹${Math.round(weekFuelCost)}</span><span style="font-size:10px;color:var(--text3)">▼</span>`;
+          const contribWrap=document.createElement('div');contribWrap.style.cssText='margin:4px 0 0;border-top:1px solid var(--border);overflow:hidden';
+          const contribHd=document.createElement('div');contribHd.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:7px 12px;cursor:pointer;user-select:none;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;background:var(--bg)';
+          contribHd.innerHTML=`<span>💰 Contributions · Total ₹${Math.round(weekFuelCost)}</span><span style="font-size:10px;color:var(--text3)">▼</span>`;
           const contribBody=document.createElement('div');contribBody.style.cssText='background:var(--white);display:none';
           contribs.forEach(c=>{
-            const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-top:1px solid var(--border)';
+            const contribRow=document.createElement('div');contribRow.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-top:1px solid var(--border)';
             const pct=weekFuelCost>0?Math.round((c.amount/weekFuelCost)*100):0;
             const roleTag=c.role==='captain'?'<span style="font-size:9px;font-weight:700;background:var(--purple-soft);color:var(--purple);border:1px solid var(--purple-border);border-radius:20px;padding:1px 6px;margin-left:5px">CAPTAIN</span>':'';
-            const isMe=c.key===rider.key?'<span style="font-size:9px;font-weight:700;background:var(--blue-soft);color:var(--blue);border:1px solid var(--blue-border);border-radius:20px;padding:1px 6px;margin-left:5px">THIS RIDER</span>':'';
-            row.innerHTML=`<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1"><div style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0"></div><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}${roleTag}${isMe}</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><span style="font-size:10px;color:var(--text3);font-weight:600">${pct}%</span><span style="font-size:13px;font-weight:700;color:var(--text)">₹${Math.round(c.amount)}</span></div>`;
-            contribBody.appendChild(row);
+            const meTag=c.key===rider.key?'<span style="font-size:9px;font-weight:700;background:var(--blue-soft);color:var(--blue);border:1px solid var(--blue-border);border-radius:20px;padding:1px 6px;margin-left:5px">THIS RIDER</span>':'';
+            contribRow.innerHTML=`<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1"><div style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0"></div><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}${roleTag}${meTag}</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><span style="font-size:10px;color:var(--text3);font-weight:600">${pct}%</span><span style="font-size:13px;font-weight:700;color:var(--text)">₹${Math.round(c.amount)}</span></div>`;
+            contribBody.appendChild(contribRow);
           });
           contribHd.addEventListener('click',()=>{const open=contribBody.style.display==='none';contribBody.style.display=open?'':'none';contribHd.querySelector('span:last-child').style.transform=open?'rotate(180deg)':'rotate(0deg)';});
-          contribWrap.appendChild(contribHd);contribWrap.appendChild(contribBody);body.appendChild(contribWrap);
+          contribWrap.appendChild(contribHd);contribWrap.appendChild(contribBody);card.appendChild(contribWrap);
         }
-      }
+
+        body.appendChild(card);
+      });
 
       hd.addEventListener('click',()=>{const ch=hd.querySelector('.dues-week-chevron'),open=!body.classList.contains('collapsed');body.classList.toggle('collapsed',open);ch.classList.toggle('open',!open);});
       block.appendChild(hd);block.appendChild(body);container.appendChild(block);
