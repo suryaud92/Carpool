@@ -1016,7 +1016,15 @@
 
   // ── GPay ─────────────────────────────────────────────
   let gpayPendingPerson=null;
-  function fireGpay(url,fallback){const i=document.createElement('iframe');i.style.display='none';document.body.appendChild(i);i.src=url;setTimeout(()=>{document.body.removeChild(i);if(document.hasFocus()){const f=document.createElement('iframe');f.style.display='none';document.body.appendChild(f);f.src=fallback;setTimeout(()=>document.body.removeChild(f),1500);}},1500);}
+  function fireGpay(url,fallback){
+    // Try the GPay-specific scheme first; if the browser stays focused after
+    // a short delay it means GPay didn't open, so fall back to generic UPI scheme.
+    window.location.href=url;
+    setTimeout(()=>{
+      // If page is still visible, GPay scheme didn't work — try generic UPI
+      if(!document.hidden)window.location.href=fallback;
+    },1200);
+  }
   function buildUpiParams(amt,label){return`pa=surya.ud92-1@okhdfcbank&pn=Surya&am=${Math.round(amt)}&cu=INR&tn=${encodeURIComponent('Narayana Carpool '+label)}`;}
 
   // ── Grouped weeks ─────────────────────────────────────
