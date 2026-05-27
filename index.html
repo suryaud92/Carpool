@@ -637,7 +637,7 @@
   onValue(dataRef,snap=>{data=snap.val()||{};dataLoaded=true;checkReady();if(fbReady){renderPersonalDashboard();renderAdminDues();}});
   onValue(settlementsRef,snap=>{settlements=snap.val()||{};settlementsLoaded=true;checkReady();if(fbReady){renderPersonalDashboard();renderAdminDues();}});
   onValue(adjustmentsRef,snap=>{adjustments=snap.val()||{};adjustmentsLoaded=true;checkReady();if(fbReady){renderPersonalDashboard();renderAdminDues();}});
-  function checkReady(){if(dataLoaded&&settlementsLoaded&&configLoaded&&adjustmentsLoaded&&!fbReady){fbReady=true;setSyncStatus('synced','Synced');renderAll();}}
+  function checkReady(){if(dataLoaded&&settlementsLoaded&&configLoaded&&!fbReady){fbReady=true;adjustmentsLoaded=true;setSyncStatus('synced','Synced');renderAll();}}
   onValue(ref(db,'.info/connected'),snap=>{if(!snap.val())setSyncStatus('error','Offline');else if(fbReady)setSyncStatus('synced','Synced');});
 
   let saveTimer=null;
@@ -1040,7 +1040,7 @@
     applyLeaveToData(rider.key,pendingLeave,rider);
 
     const wk=getWeekRange(monday);
-    const threshold=getLeaveThreshold(rider);
+    const threshold=getLeaveThreshold(rider,monday);
     const duesAdjusted=count>=threshold;
 
     // Detect affected settled riders and write adjustments
@@ -1066,7 +1066,10 @@
 
   // ── GPay ─────────────────────────────────────────────
   let gpayPendingPerson=null;
-  function fireGpay(url,fallback){const i=document.createElement('iframe');i.style.display='none';document.body.appendChild(i);i.src=url;setTimeout(()=>{document.body.removeChild(i);if(document.hasFocus()){const f=document.createElement('iframe');f.style.display='none';document.body.appendChild(f);f.src=fallback;setTimeout(()=>document.body.removeChild(f),1500);}},1500);}
+  function fireGpay(url,fallback){
+    window.location.href=url;
+    setTimeout(()=>{if(!document.hidden)window.location.href=fallback;},1200);
+  }
   function buildUpiParams(amt,label){return`pa=surya.ud92-1@okhdfcbank&pn=Surya&am=${Math.round(amt)}&cu=INR&tn=${encodeURIComponent('Narayana Carpool '+label)}`;}
 
   // ── Grouped weeks ─────────────────────────────────────
@@ -1084,7 +1087,7 @@
         const wk=getWeekRange(date);
         if(wk.key!==cachedWeekKey){
           cachedWeekKey=wk.key;weekLeaveCache={};
-          cfg.riders.forEach(r=>{const sc=getRiderLeaveSessionsInWeek(r.key,wk.monday,r);weekLeaveCache[r.key]={adjustDues:sc>=getLeaveThreshold(r)};});
+          cfg.riders.forEach(r=>{const sc=getRiderLeaveSessionsInWeek(r.key,wk.monday,r);weekLeaveCache[r.key]={adjustDues:sc>=getLeaveThreshold(r,wk.monday)};});
         }
         const dues=calculateDayDue(entry,date,weekLeaveCache);
         cfg.riders.forEach(r=>{
@@ -1101,7 +1104,7 @@
     const totals={captain:0};
     cfg.riders.forEach(r=>{totals[r.key]=0;});
     const riderWeekLeave={};
-    cfg.riders.forEach(r=>{const sc=getRiderLeaveSessionsInWeek(r.key,monday,r);riderWeekLeave[r.key]={adjustDues:sc>=getLeaveThreshold(r)};});
+    cfg.riders.forEach(r=>{const sc=getRiderLeaveSessionsInWeek(r.key,monday,r);riderWeekLeave[r.key]={adjustDues:sc>=getLeaveThreshold(r,monday)};});
     getWeekDays(monday).forEach(d=>{
       const ds=toDateStr(d),entry=data[ds]||{morning:{captain:true},evening:{captain:true}};
       const activeKeys=new Set(cfg.riders.filter(r=>{
