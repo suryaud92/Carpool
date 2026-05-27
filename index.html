@@ -1213,8 +1213,16 @@
         });
       }
     });
+    // After updating captain attendance, check if any settled riders need adjustment
+    // (captain absence reduces dues → riders overpaid; captain presence restores → riders underpaid)
+    const wk=getWeekRange(parseDate(dateStr));
+    const affected=computeAffectedRiders(wk.monday,null); // null = no rider to exclude, check all
+    affected.forEach(a=>clearAdjustmentsFromWeek(a.riderName,wk.key));
+    writeAdjustments(affected,wk,'Captain attendance change');
     saveData();closeCaptainSessModal();renderPersonalDashboard();renderAdminDues();
-    showToast(!morning&&!evening?'🚗 Captain absent all day':morning&&evening?'🚗 Captain present all sessions':'🚗 Captain session updated');
+    const sessMsg=!morning&&!evening?'🚗 Captain absent all day':morning&&evening?'🚗 Captain present all sessions':'🚗 Captain session updated';
+    const adjMsg=affected.length?` · ⚠ ${affected.map(a=>a.riderName).join(', ')} settlement adjusted`:'';
+    showToast(sessMsg+adjMsg,adjMsg?4000:2800);
   }
   function closeCaptainSessModal(){document.getElementById('captainSessModal').classList.remove('open');}
   document.getElementById('captainSessCancel').addEventListener('click',closeCaptainSessModal);
