@@ -521,7 +521,7 @@
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-  import { getDatabase, ref, set, onValue, update, off } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
+  import { getDatabase, ref, set, onValue, update, off, remove } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, browserLocalPersistence, setPersistence } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
   const firebaseConfig = {
@@ -1823,7 +1823,14 @@
         const roleSelect=document.createElement('select');roleSelect.className='role-select';roleSelect.disabled=isSelf;roleSelect.innerHTML=`<option value="user" ${u.role==='user'?'selected':''}>User</option><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>`;
         if(!isSelf)roleSelect.addEventListener('change',async e=>{await update(ref(db,`carpoolRoles/${key}`),{role:e.target.value});showToast('✓ Role updated');});
         row.appendChild(avatar);row.appendChild(info);row.appendChild(roleSelect);
-        if(!isSelf){const rb=document.createElement('button');rb.className='admin-icon-btn danger';rb.style.cssText='flex-shrink:0;font-size:11px;padding:5px 9px';rb.textContent='✕';rb.addEventListener('click',async()=>{if(!confirm(`Remove ${u.email}?`))return;const uc=JSON.parse(JSON.stringify(cfg));uc.riders.forEach(r=>{if(r.email&&r.email.toLowerCase()===(u.email||'').toLowerCase())r.email='';});await set(configRef,uc);showToast(`✓ ${u.email.split('@')[0]} unlinked`);});row.appendChild(rb);}
+        if(!isSelf){const rb=document.createElement('button');rb.className='admin-icon-btn danger';rb.style.cssText='flex-shrink:0;font-size:11px;padding:5px 9px';rb.textContent='✕';rb.addEventListener('click',async()=>{if(!confirm(`Remove ${u.email}?`))return;
+          // Delete from carpoolRoles so the user disappears from this list
+          await remove(ref(db,`carpoolRoles/${key}`));
+          // Also unlink email from any rider in config
+          const uc=JSON.parse(JSON.stringify(cfg));
+          uc.riders.forEach(r=>{if(r.email&&r.email.toLowerCase()===(u.email||'').toLowerCase())r.email='';});
+          await set(configRef,uc);
+          showToast(`✓ ${u.email.split('@')[0]} removed`);});row.appendChild(rb);}
         container.appendChild(row);
       });
     };
